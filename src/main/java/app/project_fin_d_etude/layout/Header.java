@@ -3,8 +3,6 @@ package app.project_fin_d_etude.layout;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
-import com.vaadin.flow.component.icon.Icon;
-import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -19,8 +17,6 @@ public class Header extends HorizontalLayout {
     private static final String ROUTE_CONTACT = "/contact";
     private static final String ROUTE_PROFILE = "/profile";
     private static final String ROUTE_LOGIN = "/login";
-
-    private boolean isDarkMode = false;
 
     public Header() {
         setWidthFull();
@@ -53,7 +49,6 @@ public class Header extends HorizontalLayout {
             add(profileLink);
         } else {
             H3 logo = new H3("BIENVENUE!");
-
             logo.addClassNames(
                     LumoUtility.FontSize.XLARGE,
                     LumoUtility.Margin.NONE,
@@ -77,30 +72,6 @@ public class Header extends HorizontalLayout {
         buttonsContainer.setSpacing(true);
         buttonsContainer.setAlignItems(Alignment.CENTER);
 
-        // Bouton de thème
-//        Button themeButton = new Button(new Icon(isDarkMode ? VaadinIcon.SUN_O : VaadinIcon.MOON_O));
-//        themeButton.addClassNames(
-//                LumoUtility.Background.CONTRAST_10,
-//                LumoUtility.TextColor.PRIMARY,
-//                LumoUtility.Padding.Horizontal.MEDIUM,
-//                LumoUtility.Padding.Vertical.SMALL,
-//                LumoUtility.BorderRadius.SMALL
-//        );
-//        themeButton.getStyle().set("cursor", "pointer");
-//        themeButton.getElement().setAttribute("title", isDarkMode ? "Passer en mode clair" : "Passer en mode sombre");
-//        themeButton.addClickListener(e -> {
-//            isDarkMode = !isDarkMode;
-//            themeButton.setIcon(new Icon(isDarkMode ? VaadinIcon.SUN_O : VaadinIcon.MOON_O));
-//            themeButton.getElement().setAttribute("title", isDarkMode ? "Passer en mode clair" : "Passer en mode sombre");
-//            getUI().ifPresent(ui -> {
-//                if (isDarkMode) {
-//                    ui.getElement().getThemeList().add("dark");
-//                } else {
-//                    ui.getElement().getThemeList().remove("dark");
-//                }
-//            });
-//        });
-
         // Bouton de connexion ou déconnexion
         if (currentUser != null) {
             Button logoutButton = new Button("Déconnexion");
@@ -117,7 +88,6 @@ public class Header extends HorizontalLayout {
                 VaadinSession.getCurrent().setAttribute("user", null);
                 getUI().ifPresent(ui -> ui.navigate(ROUTE_HOME));
             });
-//            buttonsContainer.add(themeButton, logoutButton);
             buttonsContainer.add(logoutButton);
         } else {
             Button loginButton = new Button("Connexion");
@@ -133,9 +103,7 @@ public class Header extends HorizontalLayout {
             loginButton.addClickListener(e -> {
                 getUI().ifPresent(ui -> ui.navigate(ROUTE_LOGIN));
             });
-//            buttonsContainer.add(themeButton, loginButton);
             buttonsContainer.add(loginButton);
-
         }
 
         add(navLinks, buttonsContainer);

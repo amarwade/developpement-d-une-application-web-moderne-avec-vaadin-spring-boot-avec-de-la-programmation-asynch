@@ -1,4 +1,4 @@
-package app.project_fin_d_etude.view;
+package app.project_fin_d_etude.views;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -10,6 +10,7 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -19,6 +20,7 @@ import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
+import app.project_fin_d_etude.utils.VaadinUtils;
 
 /**
  * Vue principale de l'application affichant la page d'accueil. Cette vue
@@ -26,7 +28,7 @@ import app.project_fin_d_etude.presenter.PostPresenter;
  */
 @Route(value = "", layout = MainLayout.class)
 @PageTitle("Accueil")
-public class HomePageView extends VerticalLayout {
+public class HomePageView extends VerticalLayout implements PostPresenter.PostView {
 
     private static final int MAX_ARTICLES = 6;
     private static final String DATE_FORMAT = "dd MMMM yyyy";
@@ -42,6 +44,7 @@ public class HomePageView extends VerticalLayout {
     @Autowired
     public HomePageView(PostPresenter postPresenter) {
         this.postPresenter = postPresenter;
+        this.postPresenter.setView(this);
         this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
         configureLayout();
@@ -67,7 +70,24 @@ public class HomePageView extends VerticalLayout {
                 LumoUtility.BorderColor.CONTRAST
         );
 
+        // Premier séparateur (au-dessus du titre)
+        HorizontalLayout separatorTop = new HorizontalLayout();
+        separatorTop.setWidth("80%");
+        separatorTop.setHeight("2px");
+        separatorTop.getStyle().set("background-color", "lightgray");
+        separatorTop.addClassNames("separator");
+        mainSection.add(separatorTop);
+
         mainSection.add(createMainTitle());
+
+        // Deuxième séparateur (en-dessous du titre)
+        HorizontalLayout separatorBottom = new HorizontalLayout();
+        separatorBottom.setWidth("80%");
+        separatorBottom.setHeight("2px");
+        separatorBottom.getStyle().set("background-color", "lightgray");
+        separatorBottom.addClassNames("separator");
+        mainSection.add(separatorBottom);
+
         mainSection.add(createMainDescription());
 
         return mainSection;
@@ -133,8 +153,8 @@ public class HomePageView extends VerticalLayout {
         VerticalLayout section = new VerticalLayout();
         section.setWidth(width);
         section.setAlignItems(alignment);
-section.addClassNames(LumoUtility.Margin.AUTO, LumoUtility.Background.CONTRAST_10, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL, LumoUtility.Padding.MEDIUM);
-section.getStyle().setWidth("100%");
+        section.addClassNames(LumoUtility.Margin.AUTO, LumoUtility.Background.CONTRAST_10, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL, LumoUtility.Padding.MEDIUM);
+        section.getStyle().setWidth("100%");
         return section;
     }
 
@@ -159,30 +179,84 @@ section.getStyle().setWidth("100%");
     }
 
     private void chargerArticles() {
-        List<Post> articles = postPresenter.getAllPosts();
-        afficherArticlesRecents(articles);
-        afficherArticlesPopulaires(articles);
+        VaadinUtils.showLoading(this);
+        postPresenter.chargerPosts();
+    }
+
+    @Override
+    public void afficherPosts(List<Post> posts) {
+        VaadinUtils.hideLoading(this);
+        afficherArticlesRecents(posts);
+        afficherArticlesPopulaires(posts);
+    }
+
+    @Override
+    public void afficherCategories(List<app.project_fin_d_etude.model.CategoriePost> categories) {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void afficherMessage(String message) {
+        VaadinUtils.showSuccessNotification(message);
+    }
+
+    @Override
+    public void afficherErreur(String erreur) {
+        VaadinUtils.showErrorNotification(erreur);
+    }
+
+    @Override
+    public void viderFormulaire() {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void redirigerVersDetail(Long postId) {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void mettreAJourPagination(int totalItems) {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void afficherPost(Post post) {
+        // Non utilisé dans cette vue
     }
 
     private void afficherArticlesRecents(List<Post> articles) {
         recentPostsGrid.removeAll();
         articles.stream()
                 .limit(MAX_ARTICLES)
-                .forEach(post -> recentPostsGrid.add(createPostCard(post)));
+                .forEach(post -> {
+                    BlogPostCard card = createPostCard(post);
+                    VaadinUtils.addResponsiveClass(card);
+                    recentPostsGrid.add(card);
+                });
     }
 
     private void afficherArticlesPopulaires(List<Post> articles) {
         topPostsGrid.removeAll();
         articles.stream()
                 .limit(MAX_ARTICLES)
-                .forEach(post -> topPostsGrid.add(createPostCard(post)));
+                .forEach(post -> {
+                    BlogPostCard card = createPostCard(post);
+                    VaadinUtils.addResponsiveClass(card);
+                    topPostsGrid.add(card);
+                });
     }
 
     private BlogPostCard createPostCard(Post post) {
-        return new BlogPostCard(
+        BlogPostCard card = new BlogPostCard(
                 post.getTitre(),
                 post.getDatePublication().format(dateFormatter),
                 post.getContenu()
         );
+        card.addClickListener(e -> {
+            VaadinUtils.showLoading(this);
+            getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId()));
+        });
+        return card;
     }
 }

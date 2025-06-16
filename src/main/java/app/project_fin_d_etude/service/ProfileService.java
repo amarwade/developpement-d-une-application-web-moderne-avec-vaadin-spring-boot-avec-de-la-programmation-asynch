@@ -1,7 +1,9 @@
 package app.project_fin_d_etude.service;
 
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import app.project_fin_d_etude.model.Profile;
@@ -17,11 +19,13 @@ public class ProfileService {
         this.profileRepository = profileRepository;
     }
 
-    public Optional<Profile> getProfileByUtilisateur(Utilisateur utilisateur) {
-        return profileRepository.findByUtilisateur(utilisateur);
+    @Async
+    public CompletableFuture<Optional<Profile>> getProfileByUtilisateur(Utilisateur utilisateur) {
+        return CompletableFuture.completedFuture(profileRepository.findByUtilisateur(utilisateur));
     }
 
-    public Profile save(Profile profile) {
-        return profileRepository.save(profile);
+    @Async
+    public CompletableFuture<Profile> save(Profile profile) {
+        return CompletableFuture.completedFuture(profileRepository.save(profile));
     }
 }

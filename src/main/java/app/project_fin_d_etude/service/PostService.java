@@ -22,33 +22,43 @@ public class PostService {
         this.postRepository = postRepository;
     }
 
-    public List<Post> getAllPosts() {
-        return postRepository.findAll();
+    @Async
+    public CompletableFuture<List<Post>> getAllPosts() {
+        return CompletableFuture.completedFuture(postRepository.findAll());
     }
 
-    public Optional<Post> getPostById(Long id) {
-        return postRepository.findById(id);
+    @Async
+    public CompletableFuture<Optional<Post>> getPostById(Long id) {
+        return CompletableFuture.completedFuture(postRepository.findById(id));
     }
 
-    public List<Post> searchPosts(String keyword) {
-        return postRepository.findByTitreContainingIgnoreCase(keyword);
+    @Async
+    public CompletableFuture<List<Post>> searchPosts(String keyword) {
+        Pageable pageable = PageRequest.of(0, 10); // Page 0 avec 10 résultats
+        return CompletableFuture.completedFuture(postRepository.searchPosts(keyword, pageable).getContent());
     }
 
-    public List<Post> getByCategorie(CategoriePost categorie) {
-        return postRepository.findByCategorie(categorie);
+    @Async
+    public CompletableFuture<List<Post>> getByCategorie(CategoriePost categorie) {
+        Pageable pageable = PageRequest.of(0, 10);
+        return CompletableFuture.completedFuture(postRepository.findByCategorie(categorie, pageable).getContent());
     }
 
-    public List<Post> getPaginatedPosts(int page, int pageSize) {
+    @Async
+    public CompletableFuture<List<Post>> getPaginatedPosts(int page, int pageSize) {
         Pageable pageable = PageRequest.of(page, pageSize);
-        return postRepository.findAll(pageable).getContent();
+        return CompletableFuture.completedFuture(postRepository.findAll(pageable).getContent());
     }
 
-    public Post save(Post post) {
-        return postRepository.save(post);
+    @Async
+    public CompletableFuture<Post> save(Post post) {
+        return CompletableFuture.completedFuture(postRepository.save(post));
     }
 
-    public void delete(Long id) {
+    @Async
+    public CompletableFuture<Void> delete(Long id) {
         postRepository.deleteById(id);
+        return CompletableFuture.completedFuture(null);
     }
 
     @Async

@@ -1,29 +1,62 @@
 package app.project_fin_d_etude.layout;
 
 import com.vaadin.flow.component.html.Anchor;
-import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-public class Footer extends HorizontalLayout {
+public class Footer extends VerticalLayout {
 
     public Footer() {
         setWidthFull();
         setPadding(true);
-        setJustifyContentMode(JustifyContentMode.CENTER);
-        addClassNames(LumoUtility.Background.CONTRAST_80, LumoUtility.TextColor.PRIMARY, LumoUtility.Padding.Vertical.MEDIUM);
-
-        HorizontalLayout footerLinks = new HorizontalLayout();
-        footerLinks.addClassNames(LumoUtility.Gap.SMALL);
-        footerLinks.add(
-                new Paragraph("© 2023"),
-                new Anchor("https://twitter.com/", "Twitter"),
-                new Anchor("https://www.linkedin.com/in/amar-wade/", "LinkedIn"),
-                new Anchor("amarwade927@gmail.com", "Email"),
-                new Anchor("https://github.com/amarwade", "Github"),
-                new Anchor("https://maps.app.goo.gl/nn9wd74L5pT52QK68", "Adresse")
+        setSpacing(true);
+        addClassNames(
+                LumoUtility.Background.CONTRAST_80,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.Padding.Vertical.MEDIUM
         );
 
-        add(footerLinks);
+        // Liens de navigation
+        HorizontalLayout footerLinks = new HorizontalLayout();
+        footerLinks.addClassNames(LumoUtility.Gap.MEDIUM);
+        footerLinks.add(
+                createFooterLink("Accueil", "/"),
+                createFooterLink("Articles", "/articles"),
+                createFooterLink("À propos", "/about"),
+                createFooterLink("Contact", "/contact")
+        );
+
+        // Informations légales
+        Div legalInfo = new Div();
+        legalInfo.addClassNames(
+                LumoUtility.TextColor.SECONDARY,
+                LumoUtility.FontSize.SMALL,
+                LumoUtility.Margin.Top.SMALL
+        );
+        legalInfo.setText("© 2024 Le Blog. Tous droits réservés.");
+
+        // Liens légaux
+        HorizontalLayout legalLinks = new HorizontalLayout();
+        legalLinks.addClassNames(LumoUtility.Gap.SMALL, LumoUtility.Margin.Top.SMALL);
+        legalLinks.add(
+                createFooterLink("Mentions légales", "/mentions-legales"),
+                createFooterLink("Politique de confidentialité", "/confidentialite"),
+                createFooterLink("Conditions d'utilisation", "/conditions")
+        );
+
+        add(footerLinks, legalInfo, legalLinks);
+    }
+
+    private Anchor createFooterLink(String text, String href) {
+        Anchor link = new Anchor(href, text);
+        link.addClassNames(
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.FontSize.SMALL
+        );
+        link.getStyle().set("text-decoration", "none");
+        link.getStyle().set("transition", "color 0.3s ease");
+        return link;
     }
 }

@@ -43,22 +43,6 @@ public class Utilisateur {
     @OneToOne(mappedBy = "utilisateur", cascade = CascadeType.ALL)
     private Profile profile;
 
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public String getNom() {
-        return nom;
-    }
-
-    public void setNom(String nom) {
-        this.nom = nom;
-    }
-
     public enum Role {
         ADMIN,
         UTILISATEUR

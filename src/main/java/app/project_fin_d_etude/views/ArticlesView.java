@@ -1,10 +1,8 @@
-package app.project_fin_d_etude.view;
+package app.project_fin_d_etude.views;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
-
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
@@ -18,10 +16,11 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
+import app.project_fin_d_etude.model.CategoriePost;
 import app.project_fin_d_etude.presenter.PostPresenter;
+import app.project_fin_d_etude.utils.VaadinUtils;
 
 /**
  * Vue principale affichant la liste des articles avec pagination et recherche.
@@ -29,7 +28,7 @@ import app.project_fin_d_etude.presenter.PostPresenter;
  */
 @Route(value = "articles", layout = MainLayout.class)
 @PageTitle("Articles")
-public class ArticlesView extends VerticalLayout {
+public class ArticlesView extends VerticalLayout implements PostPresenter.PostView {
 
     private static final int ITEMS_PER_PAGE = 6;
     private static final String DATE_FORMAT = "dd MMMM yyyy";
@@ -41,8 +40,8 @@ public class ArticlesView extends VerticalLayout {
     private Div recentPostsGrid;
     private Div topPostsGrid;
     private HorizontalLayout pagination;
-    private int currentPage = 1;
-    private DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
+    private final int currentPage = 1;
+    private final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
     @Autowired
     public ArticlesView(PostPresenter postPresenter) {
@@ -71,7 +70,24 @@ public class ArticlesView extends VerticalLayout {
                 LumoUtility.BoxShadow.SMALL
         );
 
+        // Premier séparateur (au-dessus du titre)
+        HorizontalLayout separatorTop = new HorizontalLayout();
+        separatorTop.setWidth("80%");
+        separatorTop.setHeight("2px");
+        separatorTop.getStyle().set("background-color", "lightgray");
+        separatorTop.addClassNames("separator");
+        mainContent.add(separatorTop);
+
         mainContent.add(createPageTitle());
+
+        // Deuxième séparateur (en-dessous du titre)
+        HorizontalLayout separatorBottom = new HorizontalLayout();
+        separatorBottom.setWidth("80%");
+        separatorBottom.setHeight("2px");
+        separatorBottom.getStyle().set("background-color", "lightgray");
+        separatorBottom.addClassNames("separator");
+        mainContent.add(separatorBottom);
+
         mainContent.add(createSearchAndFilterSection());
         mainContent.add(createRecentPostsSection());
         mainContent.add(createTopPostsSection());
@@ -134,15 +150,11 @@ public class ArticlesView extends VerticalLayout {
     }
 
     private Button createSearchButton() {
-        Button searchButton = new Button("RECHERCHER");
-        searchButton.addClassNames(
-                LumoUtility.Background.PRIMARY,
-                LumoUtility.TextColor.PRIMARY_CONTRAST,
-                LumoUtility.BorderRadius.MEDIUM,
-                LumoUtility.Padding.Horizontal.LARGE,
-                LumoUtility.Margin.Left.SMALL
-        );
-        searchButton.addClickListener(e -> postPresenter.rechercherArticles(searchField.getValue()));
+        Button searchButton = VaadinUtils.createPrimaryButton("RECHERCHER");
+        searchButton.addClickListener(e -> {
+            VaadinUtils.showLoading(this);
+            postPresenter.rechercherArticles(searchField.getValue());
+        });
         return searchButton;
     }
 
@@ -207,16 +219,17 @@ public class ArticlesView extends VerticalLayout {
     }
 
     private void chargerArticles() {
-        List<Post> articles = postPresenter.getAllPosts();
-        afficherArticles(articles);
-        mettreAJourPagination(articles.size());
+        VaadinUtils.showLoading(this);
+        postPresenter.chargerPosts();
     }
 
-    private void afficherArticles(List<Post> articles) {
+    @Override
+    public void afficherPosts(List<Post> posts) {
+        VaadinUtils.hideLoading(this);
         recentPostsGrid.removeAll();
         topPostsGrid.removeAll();
 
-        if (articles.isEmpty()) {
+        if (posts.isEmpty()) {
             recentPostsGrid.add(new Paragraph("Aucun article trouvé."));
             return;
         }
@@ -228,32 +241,37 @@ public class ArticlesView extends VerticalLayout {
         Div recentArticlesLayout = new Div();
         recentArticlesLayout.addClassNames(LumoUtility.Display.GRID, LumoUtility.Gap.MEDIUM);
         recentArticlesLayout.getStyle().set("grid-template-columns", GRID_TEMPLATE_COLUMNS);
+        VaadinUtils.addResponsiveClass(recentArticlesLayout);
 
         int startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, articles.size());
+        int endIndex = Math.min(startIndex + ITEMS_PER_PAGE, posts.size());
         for (int i = startIndex; i < endIndex; i++) {
-            Post article = articles.get(i);
+            Post article = posts.get(i);
             Div card = createBlogPostCard(article);
+            VaadinUtils.addResponsiveClass(card);
             recentArticlesLayout.add(card);
         }
         recentPostsGrid.add(recentArticlesLayout);
 
-        // Afficher les top posts (si nécessaire, sinon cette section peut être enlevée ou modifiée)
+        // Afficher les top posts
         H2 topPostsTitle = createSectionTitle("Top posts");
         topPostsGrid.add(topPostsTitle);
 
         Div topArticlesLayout = new Div();
         topArticlesLayout.addClassNames(LumoUtility.Display.GRID, LumoUtility.Gap.MEDIUM);
         topArticlesLayout.getStyle().set("grid-template-columns", GRID_TEMPLATE_COLUMNS);
+        VaadinUtils.addResponsiveClass(topArticlesLayout);
 
-        // Pour les top posts, nous pourrions vouloir une logique différente (ex: les plus commentés, les plus likés)
-        // Pour l'instant, nous prenons les 6 premiers articles comme exemple.
-        articles.stream()
-                .limit(6) // Exemple: prendre les 6 premiers comme top posts
-                .forEach(post -> topArticlesLayout.add(createBlogPostCard(post)));
+        posts.stream()
+                .limit(6)
+                .forEach(post -> {
+                    Div card = createBlogPostCard(post);
+                    VaadinUtils.addResponsiveClass(card);
+                    topArticlesLayout.add(card);
+                });
         topPostsGrid.add(topArticlesLayout);
 
-        mettreAJourPagination(articles.size());
+        mettreAJourPagination(posts.size());
     }
 
     private Div createBlogPostCard(Post post) {
@@ -264,12 +282,23 @@ public class ArticlesView extends VerticalLayout {
                 LumoUtility.BorderRadius.LARGE,
                 LumoUtility.BoxShadow.SMALL,
                 LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.CONTRAST
+                LumoUtility.BorderColor.CONTRAST,
+                "animate__animated",
+                "animate__fadeIn"
         );
         card.getStyle().set("display", "flex");
         card.getStyle().set("flex-direction", "column");
         card.getStyle().set("justify-content", "space-between");
         card.getStyle().set("cursor", "pointer");
+        card.getStyle().set("transition", "transform 0.2s ease-in-out");
+
+        card.addClickListener(e -> {
+            VaadinUtils.showLoading(this);
+            getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId()));
+        });
+
+        card.getElement().addEventListener("mouseenter", e -> card.getStyle().set("transform", "translateY(-5px)"));
+        card.getElement().addEventListener("mouseleave", e -> card.getStyle().set("transform", "translateY(0)"));
 
         Div contentDiv = new Div();
         contentDiv.addClassNames(LumoUtility.Margin.Bottom.SMALL);
@@ -285,24 +314,50 @@ public class ArticlesView extends VerticalLayout {
 
         contentDiv.add(title, date, preview);
 
-        Button readMoreButton = new Button("Lire plus");
-        readMoreButton.addClassNames(
-                LumoUtility.Background.PRIMARY,
-                LumoUtility.TextColor.PRIMARY_CONTRAST,
-                LumoUtility.BorderRadius.SMALL,
-                LumoUtility.Padding.Horizontal.MEDIUM,
-                LumoUtility.Margin.Top.AUTO
-        );
-        readMoreButton.addClickListener(e -> getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId())));
+        Button readMoreButton = VaadinUtils.createPrimaryButton("Lire plus");
+        readMoreButton.addClickListener(e -> {
+            VaadinUtils.showLoading(this);
+            getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId()));
+        });
 
         card.add(contentDiv, readMoreButton);
         return card;
     }
 
-    private void mettreAJourPagination(int totalItems) {
+    @Override
+    public void afficherMessage(String message) {
+        VaadinUtils.showSuccessNotification(message);
+    }
+
+    @Override
+    public void afficherErreur(String erreur) {
+        VaadinUtils.showErrorNotification(erreur);
+    }
+
+    @Override
+    public void afficherPost(Post post) {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void afficherCategories(List<CategoriePost> categories) {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void redirigerVersDetail(Long postId) {
+        getUI().ifPresent(ui -> ui.navigate("user/article/" + postId));
+    }
+
+    @Override
+    public void viderFormulaire() {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void mettreAJourPagination(int totalItems) {
         pagination.removeAll();
         int totalPages = (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
-
         pagination.add(createPaginationControls(totalPages));
     }
 

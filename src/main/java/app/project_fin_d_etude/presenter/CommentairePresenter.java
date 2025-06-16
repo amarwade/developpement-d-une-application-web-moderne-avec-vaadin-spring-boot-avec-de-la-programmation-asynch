@@ -1,9 +1,7 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
-
 import org.springframework.stereotype.Component;
-
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.service.CommentaireService;
@@ -35,8 +33,12 @@ public class CommentairePresenter {
     public void chargerCommentaires(Post post) {
         try {
             if (view != null) {
-                List<Commentaire> commentaires = commentaireService.getCommentairesByPost(post);
-                view.afficherCommentaires(commentaires);
+                commentaireService.getCommentairesByPost(post)
+                        .thenAccept(commentaires -> view.afficherCommentaires(commentaires))
+                        .exceptionally(e -> {
+                            view.afficherErreur("Erreur lors du chargement des commentaires : " + e.getMessage());
+                            return null;
+                        });
             }
         } catch (Exception e) {
             if (view != null) {
@@ -52,11 +54,17 @@ public class CommentairePresenter {
                 return;
             }
 
-            commentaireService.save(commentaire);
-            if (view != null) {
-                view.afficherMessage("Commentaire ajouté avec succès");
-                view.rafraichirListe();
-            }
+            commentaireService.save(commentaire)
+                    .thenAccept(savedCommentaire -> {
+                        if (view != null) {
+                            view.afficherMessage("Commentaire ajouté avec succès");
+                            view.rafraichirListe();
+                        }
+                    })
+                    .exceptionally(e -> {
+                        view.afficherErreur("Erreur lors de l'ajout du commentaire : " + e.getMessage());
+                        return null;
+                    });
         } catch (Exception e) {
             if (view != null) {
                 view.afficherErreur("Erreur lors de l'ajout du commentaire : " + e.getMessage());
@@ -66,11 +74,17 @@ public class CommentairePresenter {
 
     public void supprimer(Commentaire commentaire) {
         try {
-            commentaireService.delete(commentaire.getId());
-            if (view != null) {
-                view.afficherMessage("Commentaire supprimé avec succès");
-                view.rafraichirListe();
-            }
+            commentaireService.delete(commentaire.getId())
+                    .thenRun(() -> {
+                        if (view != null) {
+                            view.afficherMessage("Commentaire supprimé avec succès");
+                            view.rafraichirListe();
+                        }
+                    })
+                    .exceptionally(e -> {
+                        view.afficherErreur("Erreur lors de la suppression du commentaire : " + e.getMessage());
+                        return null;
+                    });
         } catch (Exception e) {
             if (view != null) {
                 view.afficherErreur("Erreur lors de la suppression du commentaire : " + e.getMessage());
@@ -85,11 +99,17 @@ public class CommentairePresenter {
                 return;
             }
 
-            commentaireService.save(commentaire);
-            if (view != null) {
-                view.afficherMessage("Commentaire modifié avec succès");
-                view.rafraichirListe();
-            }
+            commentaireService.save(commentaire)
+                    .thenAccept(savedCommentaire -> {
+                        if (view != null) {
+                            view.afficherMessage("Commentaire modifié avec succès");
+                            view.rafraichirListe();
+                        }
+                    })
+                    .exceptionally(e -> {
+                        view.afficherErreur("Erreur lors de la modification du commentaire : " + e.getMessage());
+                        return null;
+                    });
         } catch (Exception e) {
             if (view != null) {
                 view.afficherErreur("Erreur lors de la modification du commentaire : " + e.getMessage());

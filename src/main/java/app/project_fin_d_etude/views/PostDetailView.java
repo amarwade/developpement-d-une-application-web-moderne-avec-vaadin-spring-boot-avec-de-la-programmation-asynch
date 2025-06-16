@@ -1,4 +1,4 @@
-package app.project_fin_d_etude.view;
+package app.project_fin_d_etude.views;
 
 import java.time.format.DateTimeFormatter;
 import java.util.List;

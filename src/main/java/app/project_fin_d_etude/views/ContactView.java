@@ -1,11 +1,15 @@
-package app.project_fin_d_etude.view;
+package app.project_fin_d_etude.views;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -62,7 +66,25 @@ public class ContactView extends VerticalLayout {
                 LumoUtility.BoxShadow.SMALL
         );
 
+        // Premier séparateur (au-dessus du titre)
+        HorizontalLayout separatorTop = new HorizontalLayout();
+        separatorTop.setWidth("70%");
+        separatorTop.setHeight("2px");
+        separatorTop.getStyle().set("background-color", "lightgray");
+        separatorTop.addClassNames("separator");
+        mainContent.add(separatorTop);
+
         mainContent.add(createPageTitle());
+
+        // Deuxième séparateur (en-dessous du titre)
+        HorizontalLayout separatorBottom = new HorizontalLayout();
+        separatorBottom.setWidth("70%");
+        separatorBottom.setHeight("2px");
+        separatorBottom.getStyle().set("background-color", "lightgray");
+        separatorBottom.addClassNames("separator");
+        mainContent.add(separatorBottom);
+
+        mainContent.add(createPersonalInfo());
         mainContent.add(createContactForm());
         return mainContent;
     }
@@ -77,6 +99,49 @@ public class ContactView extends VerticalLayout {
                 LumoUtility.FontWeight.BOLD
         );
         return pageTitle;
+    }
+
+    private VerticalLayout createPersonalInfo() {
+        VerticalLayout personalInfo = new VerticalLayout();
+        personalInfo.setWidth("50%");
+        personalInfo.addClassNames(
+                LumoUtility.Background.CONTRAST_5,
+                LumoUtility.Padding.LARGE,
+                LumoUtility.BorderRadius.LARGE,
+                LumoUtility.BoxShadow.MEDIUM,
+                LumoUtility.Margin.Bottom.LARGE
+        );
+        personalInfo.setSpacing(true);
+        personalInfo.setAlignItems(FlexComponent.Alignment.CENTER);
+
+        // Nom
+        H2 name = new H2("Amar Wade");
+        name.addClassNames(LumoUtility.FontSize.XXLARGE, LumoUtility.FontWeight.BOLD);
+
+        // Rôle
+        Paragraph role = new Paragraph("Développeur Junior");
+        role.addClassNames(LumoUtility.FontSize.LARGE, LumoUtility.TextColor.SECONDARY);
+
+        // Liens sociaux
+        HorizontalLayout socialLinks = new HorizontalLayout();
+        socialLinks.setSpacing(true);
+        socialLinks.addClassNames(LumoUtility.Margin.Top.MEDIUM);
+
+        // LinkedIn
+        Anchor linkedin = new Anchor("https://www.linkedin.com/in/amar-wade/", "LinkedIn");
+        linkedin.addClassNames(LumoUtility.TextColor.PRIMARY);
+
+        // Github
+        Anchor github = new Anchor("https://github.com/amarwade", "Github");
+        github.addClassNames(LumoUtility.TextColor.PRIMARY);
+
+        // Adresse
+        Anchor adresse = new Anchor("https://maps.app.goo.gl/nn9wd74L5pT52QK68", "Adresse");
+        adresse.addClassNames(LumoUtility.TextColor.PRIMARY);
+
+        socialLinks.add(linkedin, github, adresse);
+
+        return personalInfo;
     }
 
     private VerticalLayout createContactForm() {

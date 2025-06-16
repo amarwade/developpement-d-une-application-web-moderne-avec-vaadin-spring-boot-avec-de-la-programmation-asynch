@@ -2,7 +2,9 @@ package app.project_fin_d_etude.service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import app.project_fin_d_etude.model.Utilisateur;
@@ -17,27 +19,34 @@ public class UtilisateurService {
         this.utilisateurRepository = utilisateurRepository;
     }
 
-    public Optional<Utilisateur> findByEmail(String email) {
-        return utilisateurRepository.findByEmail(email);
+    @Async
+    public CompletableFuture<Optional<Utilisateur>> findByEmail(String email) {
+        return CompletableFuture.completedFuture(utilisateurRepository.findByEmail(email));
     }
 
-    public Optional<Utilisateur> findById(Long id) {
-        return utilisateurRepository.findById(id);
+    @Async
+    public CompletableFuture<Optional<Utilisateur>> findById(Long id) {
+        return CompletableFuture.completedFuture(utilisateurRepository.findById(id));
     }
 
-    public boolean existsByEmail(String email) {
-        return utilisateurRepository.existsByEmail(email);
+    @Async
+    public CompletableFuture<Boolean> existsByEmail(String email) {
+        return CompletableFuture.completedFuture(utilisateurRepository.existsByEmail(email));
     }
 
-    public Utilisateur save(Utilisateur utilisateur) {
-        return utilisateurRepository.save(utilisateur);
+    @Async
+    public CompletableFuture<Utilisateur> save(Utilisateur utilisateur) {
+        return CompletableFuture.completedFuture(utilisateurRepository.save(utilisateur));
     }
 
-    public void delete(Utilisateur utilisateur) {
+    @Async
+    public CompletableFuture<Void> delete(Utilisateur utilisateur) {
         utilisateurRepository.delete(utilisateur);
+        return CompletableFuture.completedFuture(null);
     }
 
-    public List<Utilisateur> findAll() {
-        return utilisateurRepository.findAll();
+    @Async
+    public CompletableFuture<List<Utilisateur>> findAll() {
+        return CompletableFuture.completedFuture(utilisateurRepository.findAll());
     }
 }

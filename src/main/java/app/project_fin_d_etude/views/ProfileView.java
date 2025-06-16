@@ -1,6 +1,4 @@
-package app.project_fin_d_etude.view;
-
-import java.util.Optional;
+package app.project_fin_d_etude.views;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -76,30 +74,33 @@ public class ProfileView extends VerticalLayout {
 
         if (principal instanceof UserDetails) {
             String username = ((UserDetails) principal).getUsername();
-            Optional<Utilisateur> utilisateurOptional = utilisateurService.findByEmail(username);
+            utilisateurService.findByEmail(username)
+                    .thenAccept(utilisateurOptional -> {
+                        if (utilisateurOptional.isPresent()) {
+                            Utilisateur user = utilisateurOptional.get();
+                            usernameParagraph.setText("Nom: " + user.getNom());
+                            emailParagraph.setText("Email: " + user.getEmail());
+                            roleParagraph.setText("Rôle: " + user.getRole().name());
 
-            if (utilisateurOptional.isPresent()) {
-                Utilisateur user = utilisateurOptional.get();
-                usernameParagraph.setText("Nom: " + user.getNom());
-                emailParagraph.setText("Email: " + user.getEmail());
-                roleParagraph.setText("Rôle: " + user.getRole().name());
-
-                Optional<Profile> profileOptional = profileService.getProfileByUtilisateur(user);
-                if (profileOptional.isPresent()) {
-                    Profile profile = profileOptional.get();
-                    bioParagraph.setText("Bio: " + (profile.getBio() != null ? profile.getBio() : "Non renseignée"));
-                    descriptionParagraph.setText("Description: " + (profile.getDescription() != null ? profile.getDescription() : "Non renseignée"));
-                } else {
-                    bioParagraph.setText("Bio: Non disponible");
-                    descriptionParagraph.setText("Description: Non disponible");
-                }
-            } else {
-                usernameParagraph.setText("Utilisateur non trouvé.");
-                emailParagraph.setText("");
-                roleParagraph.setText("");
-                bioParagraph.setText("");
-                descriptionParagraph.setText("");
-            }
+                            profileService.getProfileByUtilisateur(user)
+                                    .thenAccept(profileOptional -> {
+                                        if (profileOptional.isPresent()) {
+                                            Profile profile = profileOptional.get();
+                                            bioParagraph.setText("Bio: " + (profile.getBio() != null ? profile.getBio() : "Non renseignée"));
+                                            descriptionParagraph.setText("Description: " + (profile.getDescription() != null ? profile.getDescription() : "Non renseignée"));
+                                        } else {
+                                            bioParagraph.setText("Bio: Non disponible");
+                                            descriptionParagraph.setText("Description: Non disponible");
+                                        }
+                                    });
+                        } else {
+                            usernameParagraph.setText("Utilisateur non trouvé.");
+                            emailParagraph.setText("");
+                            roleParagraph.setText("");
+                            bioParagraph.setText("");
+                            descriptionParagraph.setText("");
+                        }
+                    });
         } else {
             usernameParagraph.setText("Veuillez vous connecter pour voir votre profil.");
             emailParagraph.setText("");

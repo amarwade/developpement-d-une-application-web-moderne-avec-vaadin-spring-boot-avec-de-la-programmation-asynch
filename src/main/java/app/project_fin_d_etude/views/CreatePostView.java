@@ -1,4 +1,4 @@
-package app.project_fin_d_etude.view;
+package app.project_fin_d_etude.views;
 
 import java.util.List;
 
@@ -7,8 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.combobox.ComboBox;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.textfield.TextArea;
 import com.vaadin.flow.component.textfield.TextField;
@@ -20,6 +20,7 @@ import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.CategoriePost;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
+import app.project_fin_d_etude.utils.VaadinUtils;
 
 /**
  * Vue permettant la création d'un nouvel article. Cette vue est accessible via
@@ -29,7 +30,6 @@ import app.project_fin_d_etude.presenter.PostPresenter;
 @PageTitle("Créer un post")
 public class CreatePostView extends VerticalLayout implements PostPresenter.PostView {
 
-    private static final int NOTIFICATION_DURATION = 3000;
     private static final String TITLE_ERROR = "Veuillez entrer un titre";
     private static final String CATEGORY_ERROR = "Veuillez sélectionner une catégorie";
     private static final String CONTENT_ERROR = "Veuillez entrer un contenu";
@@ -67,7 +67,24 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
                 LumoUtility.BoxShadow.SMALL
         );
 
+        // Premier séparateur (au-dessus du titre)
+        HorizontalLayout separatorTop = new HorizontalLayout();
+        separatorTop.setWidth("80%");
+        separatorTop.setHeight("2px");
+        separatorTop.getStyle().set("background-color", "lightgray");
+        separatorTop.addClassNames("separator");
+        mainContent.add(separatorTop);
+
         mainContent.add(createPageTitle());
+
+        // Deuxième séparateur (en-dessous du titre)
+        HorizontalLayout separatorBottom = new HorizontalLayout();
+        separatorBottom.setWidth("80%");
+        separatorBottom.setHeight("2px");
+        separatorBottom.getStyle().set("background-color", "lightgray");
+        separatorBottom.addClassNames("separator");
+        mainContent.add(separatorBottom);
+
         mainContent.add(createPostForm());
         return mainContent;
     }
@@ -151,16 +168,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
     }
 
     private Button createPublishButton() {
-        Button button = new Button("Valider");
-        button.addClassNames(
-                LumoUtility.Background.PRIMARY,
-                LumoUtility.TextColor.PRIMARY_CONTRAST,
-                LumoUtility.Padding.Horizontal.LARGE,
-                LumoUtility.Padding.Vertical.MEDIUM,
-                LumoUtility.BorderRadius.LARGE,
-                LumoUtility.Margin.Top.LARGE,
-                LumoUtility.Margin.AUTO
-        );
+        Button button = VaadinUtils.createPrimaryButton("Valider");
         button.addClickListener(e -> publierArticle());
         return button;
     }
@@ -170,6 +178,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
             return;
         }
 
+        VaadinUtils.showLoading(this);
         Post post = new Post();
         post.setTitre(titleField.getValue());
         post.setContenu(contentArea.getValue());
@@ -219,9 +228,10 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
     }
 
     private void afficherNotification(String message, boolean isError) {
-        Notification notification = Notification.show(message, NOTIFICATION_DURATION, Notification.Position.TOP_CENTER);
         if (isError) {
-            notification.addThemeName("error");
+            VaadinUtils.showErrorNotification(message);
+        } else {
+            VaadinUtils.showSuccessNotification(message);
         }
     }
 
@@ -229,6 +239,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
     public void afficherCategories(List<CategoriePost> categories) {
         categoryComboBox.setItems(categories);
         categoryComboBox.setItemLabelGenerator(CategoriePost::name);
+        VaadinUtils.addResponsiveClass(categoryComboBox);
     }
 
     @Override
@@ -238,12 +249,12 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
 
     @Override
     public void afficherMessage(String message) {
-        afficherNotification(message, false);
+        VaadinUtils.showSuccessNotification(message);
     }
 
     @Override
     public void afficherErreur(String erreur) {
-        afficherNotification(erreur, true);
+        VaadinUtils.showErrorNotification(erreur);
     }
 
     @Override
@@ -251,10 +262,22 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         titleField.clear();
         categoryComboBox.clear();
         contentArea.clear();
+        VaadinUtils.hideLoading(this);
     }
 
     @Override
     public void redirigerVersDetail(Long postId) {
+        VaadinUtils.hideLoading(this);
         getUI().ifPresent(ui -> ui.navigate("article/" + postId));
+    }
+
+    @Override
+    public void mettreAJourPagination(int totalItems) {
+        // Non utilisé dans cette vue
+    }
+
+    @Override
+    public void afficherPost(Post post) {
+        // Non utilisé dans cette vue
     }
 }

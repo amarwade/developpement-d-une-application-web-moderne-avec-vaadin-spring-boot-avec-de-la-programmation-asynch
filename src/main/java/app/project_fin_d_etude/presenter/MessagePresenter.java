@@ -4,7 +4,6 @@ import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.service.MessageService;
 import lombok.Setter;
 import org.springframework.stereotype.Component;
-
 import java.util.List;
 
 @Component
@@ -30,10 +29,16 @@ public class MessagePresenter {
 
     public void envoyerMessage(Message message) {
         try {
-            messageService.save(message);
-            if (view != null) {
-                view.afficherMessage("Message envoyé avec succès !");
-            }
+            messageService.save(message)
+                    .thenAccept(savedMessage -> {
+                        if (view != null) {
+                            view.afficherMessage("Message envoyé avec succès !");
+                        }
+                    })
+                    .exceptionally(e -> {
+                        view.afficherErreur("Erreur lors de l'envoi du message : " + e.getMessage());
+                        return null;
+                    });
         } catch (Exception e) {
             if (view != null) {
                 view.afficherErreur("Erreur lors de l'envoi du message : " + e.getMessage());
@@ -45,8 +50,12 @@ public class MessagePresenter {
     public void chargerMessages() {
         try {
             if (view != null) {
-                List<Message> messages = messageService.getAllMessages();
-                view.afficherMessages(messages);
+                messageService.getAllMessages()
+                        .thenAccept(messages -> view.afficherMessages(messages))
+                        .exceptionally(e -> {
+                            view.afficherErreur("Erreur lors du chargement des messages : " + e.getMessage());
+                            return null;
+                        });
             }
         } catch (Exception e) {
             if (view != null) {
@@ -57,10 +66,16 @@ public class MessagePresenter {
 
     public void marquerCommeLu(Long messageId) {
         try {
-            messageService.markAsRead(messageId);
-            if (view != null) {
-                view.afficherMessage("Message marqué comme lu");
-            }
+            messageService.markAsRead(messageId)
+                    .thenRun(() -> {
+                        if (view != null) {
+                            view.afficherMessage("Message marqué comme lu");
+                        }
+                    })
+                    .exceptionally(e -> {
+                        view.afficherErreur("Erreur lors du marquage du message : " + e.getMessage());
+                        return null;
+                    });
         } catch (Exception e) {
             if (view != null) {
                 view.afficherErreur("Erreur lors du marquage du message : " + e.getMessage());
@@ -70,10 +85,16 @@ public class MessagePresenter {
 
     public void supprimerMessage(Long messageId) {
         try {
-            messageService.delete(messageId);
-            if (view != null) {
-                view.afficherMessage("Message supprimé avec succès");
-            }
+            messageService.delete(messageId)
+                    .thenRun(() -> {
+                        if (view != null) {
+                            view.afficherMessage("Message supprimé avec succès");
+                        }
+                    })
+                    .exceptionally(e -> {
+                        view.afficherErreur("Erreur lors de la suppression du message : " + e.getMessage());
+                        return null;
+                    });
         } catch (Exception e) {
             if (view != null) {
                 view.afficherErreur("Erreur lors de la suppression du message : " + e.getMessage());
