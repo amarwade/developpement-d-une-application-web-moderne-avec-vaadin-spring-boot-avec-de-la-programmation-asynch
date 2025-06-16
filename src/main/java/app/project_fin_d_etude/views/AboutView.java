@@ -46,7 +46,7 @@ public class AboutView extends VerticalLayout {
         mainContainer.add(separator);
         // Titre principal
         H1 title = new H1("À PROPOS DU SITE");
-        title.setMaxWidth("1159px");
+        title.setWidth("100%");
         title.addClassNames(
                 "about-page-title",
                 LumoUtility.FontSize.XXXLARGE,
