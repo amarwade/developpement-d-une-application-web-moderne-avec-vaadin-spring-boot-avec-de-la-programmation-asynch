@@ -10,7 +10,6 @@ import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
@@ -21,6 +20,7 @@ import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
+import app.project_fin_d_etude.utils.Routes;
 
 /**
  * Vue principale de l'application affichant la page d'accueil. Cette vue
@@ -50,7 +50,6 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         configureLayout();
         add(createMainSection());
         add(createRecentPostsSection());
-        add(createTopPostsSection());
 
         chargerArticles();
     }
@@ -63,7 +62,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     }
 
     private VerticalLayout createMainSection() {
-        VerticalLayout mainSection = createSection("100%", FlexComponent.Alignment.CENTER);
+        VerticalLayout mainSection = VaadinUtils.createSection("100%", FlexComponent.Alignment.CENTER);
         mainSection.addClassNames(
                 LumoUtility.Padding.Vertical.LARGE,
                 LumoUtility.Border.ALL,
@@ -71,22 +70,12 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         );
 
         // Premier séparateur (au-dessus du titre)
-        HorizontalLayout separatorTop = new HorizontalLayout();
-        separatorTop.setWidth("80%");
-        separatorTop.setHeight("2px");
-        separatorTop.getStyle().set("background-color", "lightgray");
-        separatorTop.addClassNames("separator");
-        mainSection.add(separatorTop);
+        mainSection.add(VaadinUtils.createSeparator("80%"));
 
         mainSection.add(createMainTitle());
 
         // Deuxième séparateur (en-dessous du titre)
-        HorizontalLayout separatorBottom = new HorizontalLayout();
-        separatorBottom.setWidth("80%");
-        separatorBottom.setHeight("2px");
-        separatorBottom.getStyle().set("background-color", "lightgray");
-        separatorBottom.addClassNames("separator");
-        mainSection.add(separatorBottom);
+        mainSection.add(VaadinUtils.createSeparator("80%"));
 
         mainSection.add(createMainDescription());
 
@@ -118,7 +107,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     }
 
     private VerticalLayout createRecentPostsSection() {
-        VerticalLayout section = createSection("100%", FlexComponent.Alignment.START);
+        VerticalLayout section = VaadinUtils.createSection("80%", FlexComponent.Alignment.START);
         section.addClassNames(
                 LumoUtility.Margin.Top.LARGE,
                 LumoUtility.Padding.LARGE,
@@ -126,7 +115,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
                 LumoUtility.BorderColor.CONTRAST
         );
 
-        section.add(createSectionTitle("Articles récents"));
+        section.add(VaadinUtils.createSectionTitle("Articles récents"));
         recentPostsGrid = createPostsGrid();
         section.add(recentPostsGrid);
 
@@ -134,19 +123,7 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     }
 
     private VerticalLayout createTopPostsSection() {
-        VerticalLayout section = createSection("100%", FlexComponent.Alignment.START);
-        section.addClassNames(
-                LumoUtility.Margin.Top.LARGE,
-                LumoUtility.Padding.LARGE,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.CONTRAST
-        );
-
-        section.add(createSectionTitle("Articles populaires"));
-        topPostsGrid = createPostsGrid();
-        section.add(topPostsGrid);
-
-        return section;
+        return null;
     }
 
     private VerticalLayout createSection(String width, FlexComponent.Alignment alignment) {
@@ -185,24 +162,24 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     @Override
     public void afficherPosts(List<Post> posts) {
-        VaadinUtils.hideLoading(this);
-        afficherArticlesRecents(posts);
-        afficherArticlesPopulaires(posts);
-    }
-
-    @Override
-    public void afficherCategories(List<app.project_fin_d_etude.model.CategoriePost> categories) {
-        // Non utilisé dans cette vue
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this);
+            afficherArticlesRecents(posts);
+        }));
     }
 
     @Override
     public void afficherMessage(String message) {
-        VaadinUtils.showSuccessNotification(message);
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.showSuccessNotification(message);
+        }));
     }
 
     @Override
     public void afficherErreur(String erreur) {
-        VaadinUtils.showErrorNotification(erreur);
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.showErrorNotification(erreur);
+        }));
     }
 
     @Override
@@ -227,36 +204,12 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     private void afficherArticlesRecents(List<Post> articles) {
         recentPostsGrid.removeAll();
-        articles.stream()
-                .limit(MAX_ARTICLES)
-                .forEach(post -> {
-                    BlogPostCard card = createPostCard(post);
-                    VaadinUtils.addResponsiveClass(card);
-                    recentPostsGrid.add(card);
-                });
-    }
-
-    private void afficherArticlesPopulaires(List<Post> articles) {
-        topPostsGrid.removeAll();
-        articles.stream()
-                .limit(MAX_ARTICLES)
-                .forEach(post -> {
-                    BlogPostCard card = createPostCard(post);
-                    VaadinUtils.addResponsiveClass(card);
-                    topPostsGrid.add(card);
-                });
+        for (Post post : articles) {
+            recentPostsGrid.add(createPostCard(post));
+        }
     }
 
     private BlogPostCard createPostCard(Post post) {
-        BlogPostCard card = new BlogPostCard(
-                post.getTitre(),
-                post.getDatePublication().format(dateFormatter),
-                post.getContenu()
-        );
-        card.addClickListener(e -> {
-            VaadinUtils.showLoading(this);
-            getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId()));
-        });
-        return card;
+        return new BlogPostCard(post, p -> getUI().ifPresent(ui -> ui.navigate(Routes.getUserArticleUrl(p.getId()))));
     }
 }

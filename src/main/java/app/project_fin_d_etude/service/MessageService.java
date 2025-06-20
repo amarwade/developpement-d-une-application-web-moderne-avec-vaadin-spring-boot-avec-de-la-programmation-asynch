@@ -2,6 +2,8 @@ package app.project_fin_d_etude.service;
 
 import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.repository.MessageRepository;
+import app.project_fin_d_etude.utils.EntityValidator;
+import app.project_fin_d_etude.utils.ExceptionHandler;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +21,12 @@ public class MessageService {
 
     @Async
     public CompletableFuture<Message> save(Message message) {
+        // Validation de l'entité avant sauvegarde
+        EntityValidator.ValidationResult validationResult = EntityValidator.validateMessage(message);
+        if (!validationResult.isValid()) {
+            throw new IllegalArgumentException("Message invalide: " + validationResult.getAllErrorsAsString());
+        }
+
         return CompletableFuture.completedFuture(messageRepository.save(message));
     }
 
@@ -34,6 +42,10 @@ public class MessageService {
 
     @Async
     public CompletableFuture<Void> markAsRead(Long messageId) {
+        if (messageId == null) {
+            throw new IllegalArgumentException("L'ID du message ne peut pas être null");
+        }
+
         messageRepository.findById(messageId).ifPresent(message -> {
             message.setLu(true);
             messageRepository.save(message);
@@ -43,6 +55,10 @@ public class MessageService {
 
     @Async
     public CompletableFuture<Void> delete(Long messageId) {
+        if (messageId == null) {
+            throw new IllegalArgumentException("L'ID du message ne peut pas être null");
+        }
+
         messageRepository.deleteById(messageId);
         return CompletableFuture.completedFuture(null);
     }

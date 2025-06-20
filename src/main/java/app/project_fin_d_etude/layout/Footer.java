@@ -6,6 +6,8 @@ import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
+import app.project_fin_d_etude.utils.Routes;
+
 public class Footer extends VerticalLayout {
 
     public Footer() {
@@ -22,10 +24,10 @@ public class Footer extends VerticalLayout {
         HorizontalLayout footerLinks = new HorizontalLayout();
         footerLinks.addClassNames(LumoUtility.Gap.MEDIUM);
         footerLinks.add(
-                createFooterLink("Accueil", "/"),
-                createFooterLink("Articles", "/articles"),
-                createFooterLink("À propos", "/about"),
-                createFooterLink("Contact", "/contact")
+                createFooterLink("Accueil", Routes.HOME),
+                createFooterLink("Articles", Routes.ARTICLES),
+                createFooterLink("À propos", Routes.ABOUT),
+                createFooterLink("Contact", Routes.CONTACT)
         );
 
         // Informations légales

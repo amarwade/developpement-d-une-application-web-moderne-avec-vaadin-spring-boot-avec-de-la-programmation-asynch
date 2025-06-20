@@ -4,10 +4,19 @@ import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.dialog.Dialog;
 import com.vaadin.flow.component.html.Div;
+import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.notification.Notification;
 import com.vaadin.flow.component.notification.NotificationVariant;
 import com.vaadin.flow.component.progressbar.ProgressBar;
+import com.vaadin.flow.component.orderedlayout.FlexComponent;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
+import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.textfield.TextArea;
+import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.SerializableConsumer;
+import com.vaadin.flow.theme.lumo.LumoUtility;
 
 public class VaadinUtils {
 
@@ -31,16 +40,154 @@ public class VaadinUtils {
         showNotification(message, NotificationVariant.LUMO_WARNING);
     }
 
+    public static Button createPrimaryButton(String text) {
+        Button button = new Button(text);
+        button.addClassNames(
+                LumoUtility.Background.PRIMARY,
+                LumoUtility.TextColor.PRIMARY_CONTRAST,
+                LumoUtility.Padding.Horizontal.LARGE,
+                LumoUtility.Padding.Vertical.MEDIUM,
+                LumoUtility.BorderRadius.LARGE,
+                LumoUtility.FontWeight.MEDIUM,
+                "animate__animated",
+                "animate__pulse",
+                "animate__infinite"
+        );
+        return button;
+    }
+
+    public static Button createSecondaryButton(String text) {
+        Button button = new Button(text);
+        button.addClassNames(
+                LumoUtility.Background.CONTRAST_5,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.Padding.Horizontal.MEDIUM,
+                LumoUtility.Padding.Vertical.SMALL,
+                LumoUtility.BorderRadius.MEDIUM,
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.CONTRAST,
+                "animate__animated",
+                "animate__fadeIn"
+        );
+        return button;
+    }
+
+    public static H1 createPageTitle(String text) {
+        H1 title = new H1(text);
+        title.addClassNames(
+                LumoUtility.FontSize.XXXLARGE,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Margin.Bottom.LARGE,
+                LumoUtility.FontWeight.BOLD
+        );
+        return title;
+    }
+
+    public static H2 createSectionTitle(String text) {
+        H2 title = new H2(text);
+        title.addClassNames(
+                LumoUtility.FontSize.XLARGE,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.Border.BOTTOM,
+                LumoUtility.BorderColor.PRIMARY_50,
+                LumoUtility.Padding.Bottom.SMALL,
+                LumoUtility.Margin.Bottom.MEDIUM
+        );
+        return title;
+    }
+
+    public static H3 createSubTitle(String text) {
+        H3 title = new H3(text);
+        title.addClassNames(
+                LumoUtility.FontSize.LARGE,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.Margin.Bottom.MEDIUM,
+                LumoUtility.FontWeight.MEDIUM
+        );
+        return title;
+    }
+
+    public static HorizontalLayout createSeparator(String width) {
+        HorizontalLayout separator = new HorizontalLayout();
+        separator.setWidth(width);
+        separator.setHeight("2px");
+        separator.getStyle().set("background-color", "lightgray");
+        separator.addClassNames("separator");
+        return separator;
+    }
+
+    public static VerticalLayout createSection(String width, FlexComponent.Alignment alignment) {
+        VerticalLayout section = new VerticalLayout();
+        section.setWidth(width);
+        section.setPadding(true);
+        section.setAlignItems(alignment);
+        section.addClassNames(
+                LumoUtility.Margin.AUTO,
+                LumoUtility.Background.CONTRAST_10,
+                LumoUtility.BorderRadius.LARGE,
+                LumoUtility.BoxShadow.SMALL,
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.CONTRAST
+        );
+        return section;
+    }
+
+    public static VerticalLayout createFormSection() {
+        VerticalLayout section = new VerticalLayout();
+        section.setWidth("50%");
+        section.addClassNames(
+                LumoUtility.Background.CONTRAST_5,
+                LumoUtility.Padding.LARGE,
+                LumoUtility.BorderRadius.LARGE,
+                LumoUtility.BoxShadow.MEDIUM,
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.CONTRAST
+        );
+        section.setSpacing(true);
+        return section;
+    }
+
+    public static TextField createTextField(String label, String placeholder) {
+        TextField field = new TextField(label);
+        field.setPlaceholder(placeholder);
+        field.setWidthFull();
+        field.setRequired(true);
+        field.setRequiredIndicatorVisible(true);
+        field.addClassNames(
+                LumoUtility.Background.BASE,
+                LumoUtility.TextColor.PRIMARY
+        );
+        return field;
+    }
+
+    public static TextArea createTextArea(String label, String placeholder, String height) {
+        TextArea area = new TextArea(label);
+        area.setPlaceholder(placeholder);
+        area.setWidthFull();
+        area.setHeight(height);
+        area.setRequired(true);
+        area.setRequiredIndicatorVisible(true);
+        area.addClassNames(
+                LumoUtility.Background.BASE,
+                LumoUtility.TextColor.PRIMARY
+        );
+        return area;
+    }
+
     public static void showConfirmationDialog(String title, String message, SerializableConsumer<Boolean> onConfirm) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(title);
         dialog.add(message);
 
-        Button confirmButton = new Button("Confirmer", e -> {
+        Button confirmButton = createPrimaryButton("Confirmer");
+        confirmButton.addClickListener(e -> {
             dialog.close();
             onConfirm.accept(true);
         });
-        Button cancelButton = new Button("Annuler", e -> {
+
+        Button cancelButton = createSecondaryButton("Annuler");
+        cancelButton.addClickListener(e -> {
             dialog.close();
             onConfirm.accept(false);
         });
@@ -55,25 +202,6 @@ public class VaadinUtils {
                 "animate__fadeIn",
                 "animate__faster"
         );
-    }
-
-    public static Button createPrimaryButton(String text) {
-        Button button = new Button(text);
-        button.addClassNames(
-                "animate__animated",
-                "animate__pulse",
-                "animate__infinite"
-        );
-        return button;
-    }
-
-    public static Button createSecondaryButton(String text) {
-        Button button = new Button(text);
-        button.addClassNames(
-                "animate__animated",
-                "animate__fadeIn"
-        );
-        return button;
     }
 
     public static Div createLoadingOverlay() {

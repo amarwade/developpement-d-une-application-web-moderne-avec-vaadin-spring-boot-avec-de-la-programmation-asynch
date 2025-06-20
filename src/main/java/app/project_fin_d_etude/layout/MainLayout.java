@@ -13,6 +13,5 @@ public class MainLayout extends VerticalLayout implements RouterLayout {
 
         // Header
         add(new Header());
-
     }
 }

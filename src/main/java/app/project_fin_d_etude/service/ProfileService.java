@@ -28,4 +28,9 @@ public class ProfileService {
     public CompletableFuture<Profile> save(Profile profile) {
         return CompletableFuture.completedFuture(profileRepository.save(profile));
     }
+
+    @Async
+    public CompletableFuture<java.util.List<Profile>> getAllProfiles() {
+        return CompletableFuture.completedFuture(profileRepository.findAll());
+    }
 }

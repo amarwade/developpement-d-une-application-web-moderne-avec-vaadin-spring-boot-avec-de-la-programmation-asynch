@@ -8,8 +8,6 @@ import com.vaadin.flow.component.template.Id;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -38,7 +36,7 @@ public class Post {
     private String contenu;
 
     @Column(nullable = false)
-    private LocalDateTime datePublication = LocalDateTime.now();
+    private LocalDateTime datePublication;
 
     // Relation avec l'auteur
     @ManyToOne(fetch = FetchType.LAZY)
@@ -48,9 +46,4 @@ public class Post {
     // Liste des commentaires liés au post
     @OneToMany(mappedBy = "post", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Commentaire> commentaires;
-
-    // Catégorie du post
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private CategoriePost categorie;
 }

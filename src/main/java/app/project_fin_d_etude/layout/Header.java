@@ -4,19 +4,14 @@ import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Anchor;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
-import com.vaadin.flow.server.VaadinSession;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
-import app.project_fin_d_etude.model.Utilisateur;
+import app.project_fin_d_etude.utils.Routes;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 public class Header extends HorizontalLayout {
-
-    private static final String ROUTE_HOME = "/";
-    private static final String ROUTE_ARTICLES = "/articles";
-    private static final String ROUTE_ABOUT = "/about";
-    private static final String ROUTE_CONTACT = "/contact";
-    private static final String ROUTE_PROFILE = "/profile";
-    private static final String ROUTE_LOGIN = "/login";
 
     public Header() {
         setWidthFull();
@@ -31,12 +26,24 @@ public class Header extends HorizontalLayout {
         getStyle().set("position", "relative");
         getStyle().set("top", "0");
 
-        // Récupérer l'utilisateur connecté depuis la session
-        Utilisateur currentUser = (Utilisateur) VaadinSession.getCurrent().getAttribute("user");
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        boolean isAuthenticated = authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser;
 
-        // Logo ou lien vers le profil
-        if (currentUser != null) {
-            Anchor profileLink = new Anchor(ROUTE_PROFILE, currentUser.getNom());
+        if (isAuthenticated) {
+            OidcUser oidcUser = (OidcUser) authentication.getPrincipal();
+            String email = oidcUser.getEmail();
+            String givenName = oidcUser.getGivenName();
+            String familyName = oidcUser.getFamilyName();
+
+            String displayName = ((givenName != null ? givenName : "") + " " + (familyName != null ? familyName : "")).trim();
+            if (displayName.isBlank()) {
+                displayName = oidcUser.getPreferredUsername();
+            }
+            if (displayName.isBlank()) {
+                displayName = email;
+            }
+
+            Anchor profileLink = new Anchor("/user/profile", displayName);
             profileLink.addClassNames(
                     LumoUtility.FontSize.XLARGE,
                     LumoUtility.Margin.NONE,
@@ -61,20 +68,21 @@ public class Header extends HorizontalLayout {
         navLinks.setSpacing(true);
         navLinks.addClassNames(LumoUtility.Gap.MEDIUM);
 
-        // Création des liens de navigation
-        createNavLink(navLinks, ROUTE_HOME, "Accueil");
-        createNavLink(navLinks, ROUTE_ARTICLES, "Articles");
-        createNavLink(navLinks, ROUTE_ABOUT, "A propos");
-        createNavLink(navLinks, ROUTE_CONTACT, "Contact");
+        createNavLink(navLinks, Routes.HOME, "Accueil");
+        createNavLink(navLinks, Routes.ARTICLES, "Articles");
+        createNavLink(navLinks, Routes.ABOUT, "A propos");
+        createNavLink(navLinks, Routes.CONTACT, "Contact");
 
-        // Conteneur pour les boutons
+        if (isAuthenticated) {
+            createNavLink(navLinks, Routes.USER_CREATE_POST, "Créer un Post");
+        }
+
         HorizontalLayout buttonsContainer = new HorizontalLayout();
         buttonsContainer.setSpacing(true);
         buttonsContainer.setAlignItems(Alignment.CENTER);
 
-        // Bouton de connexion ou déconnexion
-        if (currentUser != null) {
-            Button logoutButton = new Button("Déconnexion");
+        if (isAuthenticated) {
+            Button logoutButton = new Button("Déconnexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/logout")));
             logoutButton.addClassNames(
                     LumoUtility.Background.PRIMARY,
                     LumoUtility.TextColor.PRIMARY_CONTRAST,
@@ -84,13 +92,9 @@ public class Header extends HorizontalLayout {
             );
             logoutButton.getStyle().set("cursor", "pointer");
             logoutButton.getElement().setAttribute("title", "Se déconnecter de votre compte");
-            logoutButton.addClickListener(e -> {
-                VaadinSession.getCurrent().setAttribute("user", null);
-                getUI().ifPresent(ui -> ui.navigate(ROUTE_HOME));
-            });
             buttonsContainer.add(logoutButton);
         } else {
-            Button loginButton = new Button("Connexion");
+            Button loginButton = new Button("Connexion", e -> getUI().ifPresent(ui -> ui.getPage().setLocation("/oauth2/authorization/keycloak")));
             loginButton.addClassNames(
                     LumoUtility.Background.PRIMARY,
                     LumoUtility.TextColor.PRIMARY_CONTRAST,
@@ -100,9 +104,6 @@ public class Header extends HorizontalLayout {
             );
             loginButton.getStyle().set("cursor", "pointer");
             loginButton.getElement().setAttribute("title", "Se connecter à votre compte");
-            loginButton.addClickListener(e -> {
-                getUI().ifPresent(ui -> ui.navigate(ROUTE_LOGIN));
-            });
             buttonsContainer.add(loginButton);
         }
 
