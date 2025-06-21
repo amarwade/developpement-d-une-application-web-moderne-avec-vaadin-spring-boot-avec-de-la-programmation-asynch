@@ -7,10 +7,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
-import com.vaadin.flow.component.html.H2;
+import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
+import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
@@ -19,12 +20,12 @@ import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
-import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.Routes;
+import app.project_fin_d_etude.utils.VaadinUtils;
 
 /**
  * Vue principale de l'application affichant la page d'accueil. Cette vue
- * présente les articles récents et populaires.
+ * présente les articles récents.
  */
 @Route(value = "", layout = MainLayout.class)
 @PageTitle("Accueil")
@@ -39,21 +40,29 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     private final PostPresenter postPresenter;
     private final DateTimeFormatter dateFormatter;
     private Div recentPostsGrid;
-    private Div topPostsGrid;
+    private VerticalLayout recentPostsSection;
+    private VerticalLayout loader;
 
     @Autowired
-    public HomePageView(PostPresenter postPresenter) {
+    public HomePageView(final PostPresenter postPresenter) {
         this.postPresenter = postPresenter;
         this.postPresenter.setView(this);
         this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
         configureLayout();
         add(createMainSection());
-        add(createRecentPostsSection());
 
-        chargerArticles();
+        recentPostsSection = createRecentPostsSection();
+        recentPostsSection.setVisible(false);
+        add(recentPostsSection);
+
+        showLoader();
+        postPresenter.chargerPosts();
     }
 
+    /**
+     * Configure le layout principal de la page.
+     */
     private void configureLayout() {
         setSpacing(false);
         setPadding(false);
@@ -61,29 +70,28 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         addClassNames(LumoUtility.Background.CONTRAST_5);
     }
 
+    /**
+     * Crée la section principale (titre, séparateurs, description).
+     */
     private VerticalLayout createMainSection() {
-        VerticalLayout mainSection = VaadinUtils.createSection("100%", FlexComponent.Alignment.CENTER);
+        final VerticalLayout mainSection = VaadinUtils.createSection("100%", FlexComponent.Alignment.CENTER);
         mainSection.addClassNames(
                 LumoUtility.Padding.Vertical.LARGE,
                 LumoUtility.Border.ALL,
                 LumoUtility.BorderColor.CONTRAST
         );
-
-        // Premier séparateur (au-dessus du titre)
         mainSection.add(VaadinUtils.createSeparator("80%"));
-
         mainSection.add(createMainTitle());
-
-        // Deuxième séparateur (en-dessous du titre)
         mainSection.add(VaadinUtils.createSeparator("80%"));
-
         mainSection.add(createMainDescription());
-
         return mainSection;
     }
 
+    /**
+     * Crée le titre principal de la page.
+     */
     private H1 createMainTitle() {
-        H1 title = new H1("LE BLOG");
+        final H1 title = new H1("LE BLOG");
         title.addClassNames(
                 LumoUtility.FontSize.XXXLARGE,
                 LumoUtility.TextColor.PRIMARY,
@@ -94,8 +102,11 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         return title;
     }
 
+    /**
+     * Crée la description principale de la page.
+     */
     private Paragraph createMainDescription() {
-        Paragraph description = new Paragraph(MAIN_DESCRIPTION);
+        final Paragraph description = new Paragraph(MAIN_DESCRIPTION);
         description.addClassNames(
                 LumoUtility.TextColor.PRIMARY,
                 LumoUtility.TextAlignment.CENTER,
@@ -106,80 +117,58 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         return description;
     }
 
+    /**
+     * Crée la section affichant les articles récents.
+     */
     private VerticalLayout createRecentPostsSection() {
-        VerticalLayout section = VaadinUtils.createSection("80%", FlexComponent.Alignment.START);
+        final VerticalLayout section = VaadinUtils.createSection("80%", FlexComponent.Alignment.START);
         section.addClassNames(
                 LumoUtility.Margin.Top.LARGE,
                 LumoUtility.Padding.LARGE,
                 LumoUtility.Border.ALL,
                 LumoUtility.BorderColor.CONTRAST
         );
-
         section.add(VaadinUtils.createSectionTitle("Articles récents"));
         recentPostsGrid = createPostsGrid();
         section.add(recentPostsGrid);
-
         return section;
     }
 
-    private VerticalLayout createTopPostsSection() {
-        return null;
-    }
-
-    private VerticalLayout createSection(String width, FlexComponent.Alignment alignment) {
-        VerticalLayout section = new VerticalLayout();
-        section.setWidth(width);
-        section.setAlignItems(alignment);
-        section.addClassNames(LumoUtility.Margin.AUTO, LumoUtility.Background.CONTRAST_10, LumoUtility.BorderRadius.LARGE, LumoUtility.BoxShadow.SMALL, LumoUtility.Padding.MEDIUM);
-        section.getStyle().setWidth("100%");
-        return section;
-    }
-
-    private H2 createSectionTitle(String title) {
-        H2 sectionTitle = new H2(title);
-        sectionTitle.addClassNames(
-                LumoUtility.FontSize.XLARGE,
-                LumoUtility.TextColor.PRIMARY,
-                LumoUtility.Border.BOTTOM,
-                LumoUtility.BorderColor.PRIMARY_50,
-                LumoUtility.Padding.Bottom.SMALL,
-                LumoUtility.Margin.Bottom.MEDIUM
-        );
-        return sectionTitle;
-    }
-
+    /**
+     * Crée la grille d'affichage des articles.
+     */
     private Div createPostsGrid() {
-        Div grid = new Div();
+        final Div grid = new Div();
         grid.addClassNames(LumoUtility.Display.GRID, LumoUtility.Gap.MEDIUM);
         grid.getStyle().set("grid-template-columns", GRID_TEMPLATE);
         return grid;
     }
 
-    private void chargerArticles() {
-        VaadinUtils.showLoading(this);
-        postPresenter.chargerPosts();
-    }
-
+    /**
+     * Affiche les articles reçus (ou un message si aucun).
+     */
     @Override
-    public void afficherPosts(List<Post> posts) {
+    public void afficherPosts(final List<Post> posts) {
         getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.hideLoading(this);
+            hideLoader();
             afficherArticlesRecents(posts);
         }));
     }
 
+    /**
+     * Affiche un message de succès.
+     */
     @Override
-    public void afficherMessage(String message) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.showSuccessNotification(message);
-        }));
+    public void afficherMessage(final String message) {
+        getUI().ifPresent(ui -> ui.access(() -> VaadinUtils.showSuccessNotification(message)));
     }
 
+    /**
+     * Affiche un message d'erreur.
+     */
     @Override
-    public void afficherErreur(String erreur) {
-        getUI().ifPresent(ui -> ui.access(() -> {
-            VaadinUtils.showErrorNotification(erreur);
-        }));
+    public void afficherErreur(final String erreur) {
+        getUI().ifPresent(ui -> ui.access(() -> VaadinUtils.showErrorNotification(erreur)));
     }
 
     @Override
@@ -202,14 +191,46 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
         // Non utilisé dans cette vue
     }
 
-    private void afficherArticlesRecents(List<Post> articles) {
-        recentPostsGrid.removeAll();
-        for (Post post : articles) {
-            recentPostsGrid.add(createPostCard(post));
+    private void showLoader() {
+        if (loader == null) {
+            loader = new VerticalLayout();
+            loader.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+            loader.setAlignItems(FlexComponent.Alignment.CENTER);
+            loader.getStyle().set("padding", "50px");
+            ProgressBar progress = new ProgressBar();
+            progress.setIndeterminate(true);
+            loader.add(new H3("Chargement des articles récents..."), progress);
         }
+        add(loader);
+        recentPostsSection.setVisible(false);
     }
 
-    private BlogPostCard createPostCard(Post post) {
+    private void hideLoader() {
+        if (loader != null) {
+            remove(loader);
+        }
+        recentPostsSection.setVisible(true);
+    }
+
+    /**
+     * Affiche les articles récents dans la grille, ou un message si aucun
+     * article.
+     */
+    private void afficherArticlesRecents(final List<Post> articles) {
+        recentPostsGrid.removeAll();
+        if (articles == null || articles.isEmpty()) {
+            final Paragraph noArticles = new Paragraph("Aucun article récent à afficher.");
+            noArticles.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER, LumoUtility.FontSize.LARGE);
+            recentPostsGrid.add(noArticles);
+            return;
+        }
+        articles.stream().limit(MAX_ARTICLES).forEach(post -> recentPostsGrid.add(createPostCard(post)));
+    }
+
+    /**
+     * Crée une carte d'article cliquable.
+     */
+    private BlogPostCard createPostCard(final Post post) {
         return new BlogPostCard(post, p -> getUI().ifPresent(ui -> ui.navigate(Routes.getUserArticleUrl(p.getId()))));
     }
 }

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -17,12 +18,16 @@ import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.presenter.CommentairePresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 
+/**
+ * Vue d'administration des commentaires : affichage automatique et gestion.
+ */
 @Route(value = "admin/commentaires", layout = AdminLayout.class)
 @PageTitle("Gestion des commentaires - Administration")
 public class AdminCommentairesView extends VerticalLayout implements CommentairePresenter.CommentaireView {
 
     private final CommentairePresenter commentairePresenter;
     private final Grid<Commentaire> grid = new Grid<>(Commentaire.class);
+    private final Paragraph noCommentsMessage = new Paragraph("Aucun commentaire à afficher.");
 
     @Autowired
     public AdminCommentairesView(CommentairePresenter commentairePresenter) {
@@ -36,8 +41,15 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
 
         add(createMainContent());
         configureGrid();
+
+        // Affichage automatique des commentaires dès le chargement
+        VaadinUtils.showLoading(this);
+        commentairePresenter.chargerCommentaires(null);
     }
 
+    /**
+     * Crée le layout principal (titre, section, grid).
+     */
     private VerticalLayout createMainContent() {
         VerticalLayout mainContent = new VerticalLayout();
         mainContent.setWidth("100%");
@@ -56,6 +68,9 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         return mainContent;
     }
 
+    /**
+     * Crée le titre principal de la page.
+     */
     private H1 createPageTitle() {
         H1 pageTitle = new H1("GESTION DES COMMENTAIRES");
         pageTitle.addClassNames(
@@ -68,6 +83,9 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         return pageTitle;
     }
 
+    /**
+     * Crée la section contenant la grille des commentaires.
+     */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
         contentSection.setWidth("90%");
@@ -79,9 +97,15 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         );
 
         contentSection.add(grid);
+        noCommentsMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER);
+        noCommentsMessage.setVisible(false);
+        contentSection.add(noCommentsMessage);
         return contentSection;
     }
 
+    /**
+     * Configure la grille d'affichage des commentaires.
+     */
     private void configureGrid() {
         grid.addClassNames("contact-grid");
         grid.setColumns("id", "contenu", "dateCreation");
@@ -103,21 +127,43 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
     }
 
+    /**
+     * Affiche les commentaires dans la grille, ou un message si aucun
+     * commentaire.
+     */
     @Override
     public void afficherCommentaires(List<Commentaire> commentaires) {
-        getUI().ifPresent(ui -> ui.access(() -> grid.setItems(commentaires)));
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this);
+            if (commentaires == null || commentaires.isEmpty()) {
+                grid.setItems(List.of());
+                noCommentsMessage.setVisible(true);
+            } else {
+                grid.setItems(commentaires);
+                noCommentsMessage.setVisible(false);
+            }
+        }));
     }
 
+    /**
+     * Affiche un message de succès.
+     */
     @Override
     public void afficherMessage(String message) {
         VaadinUtils.showSuccessNotification(message);
     }
 
+    /**
+     * Affiche un message d'erreur.
+     */
     @Override
     public void afficherErreur(String erreur) {
         VaadinUtils.showErrorNotification(erreur);
     }
 
+    /**
+     * Rafraîchit la liste des commentaires (optionnel).
+     */
     @Override
     public void rafraichirListe() {
         // Optionnel : recharger les commentaires si besoin

@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -17,12 +18,16 @@ import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 
+/**
+ * Vue d'administration des articles : affichage automatique et gestion.
+ */
 @Route(value = "admin/posts", layout = AdminLayout.class)
 @PageTitle("Gestion des articles - Administration")
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
     private final Grid<Post> grid = new Grid<>(Post.class);
+    private final Paragraph noPostsMessage = new Paragraph("Aucun article à afficher.");
 
     @Autowired
     public AdminPostsView(PostPresenter postPresenter) {
@@ -36,9 +41,13 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
 
         add(createMainContent());
         configureGrid();
-        loadPosts();
+        VaadinUtils.showLoading(this);
+        postPresenter.chargerPosts();
     }
 
+    /**
+     * Crée le layout principal (titre, section, grid).
+     */
     private VerticalLayout createMainContent() {
         VerticalLayout mainContent = new VerticalLayout();
         mainContent.setWidth("100%");
@@ -57,6 +66,9 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         return mainContent;
     }
 
+    /**
+     * Crée le titre principal de la page.
+     */
     private H1 createPageTitle() {
         H1 pageTitle = new H1("GESTION DES ARTICLES");
         pageTitle.addClassNames(
@@ -69,6 +81,9 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         return pageTitle;
     }
 
+    /**
+     * Crée la section contenant la grille des articles.
+     */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
         contentSection.setWidth("90%");
@@ -80,9 +95,15 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         );
 
         contentSection.add(grid);
+        noPostsMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER);
+        noPostsMessage.setVisible(false);
+        contentSection.add(noPostsMessage);
         return contentSection;
     }
 
+    /**
+     * Configure la grille d'affichage des articles.
+     */
     private void configureGrid() {
         grid.addClassNames("contact-grid");
         grid.setColumns("id", "titre", "contenu", "datePublication");
@@ -97,20 +118,34 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
     }
 
-    private void loadPosts() {
-        postPresenter.chargerPosts();
-    }
-
+    /**
+     * Affiche les articles dans la grille, ou un message si aucun article.
+     */
     @Override
     public void afficherPosts(List<Post> posts) {
-        getUI().ifPresent(ui -> ui.access(() -> grid.setItems(posts)));
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this);
+            if (posts == null || posts.isEmpty()) {
+                grid.setItems(List.of());
+                noPostsMessage.setVisible(true);
+            } else {
+                grid.setItems(posts);
+                noPostsMessage.setVisible(false);
+            }
+        }));
     }
 
+    /**
+     * Affiche un message de succès.
+     */
     @Override
     public void afficherMessage(String message) {
         VaadinUtils.showSuccessNotification(message);
     }
 
+    /**
+     * Affiche un message d'erreur.
+     */
     @Override
     public void afficherErreur(String erreur) {
         VaadinUtils.showErrorNotification(erreur);

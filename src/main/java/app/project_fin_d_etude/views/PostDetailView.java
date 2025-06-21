@@ -29,6 +29,10 @@ import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
 
+/**
+ * Vue de détail d'un article : affiche le contenu de l'article et ses
+ * commentaires. L'affichage est automatique dès le chargement de la page.
+ */
 @Route(value = "user/article", layout = MainLayout.class)
 @PageTitle("Détail de l'article")
 public class PostDetailView extends VerticalLayout implements HasUrlParameter<Long>, PostPresenter.PostView, CommentairePresenter.CommentaireView {
@@ -43,6 +47,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     private final DateTimeFormatter dateFormatter;
     private VerticalLayout commentsSection;
     private TextArea commentTextArea;
+    private Button submitButton;
     private Post currentPost;
 
     @Autowired
@@ -52,18 +57,28 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
         this.postPresenter.setView(this);
         this.commentairePresenter.setView(this);
-
     }
 
+    /**
+     * Récupère l'identifiant de l'article depuis l'URL et déclenche le
+     * chargement.
+     */
     @Override
     public void setParameter(BeforeEvent event, Long postId) {
         if (postId == null) {
-            showErrorAndRedirect("ID d'article invalide");
+            getUI().ifPresent(ui -> ui.navigate("articles"));
+            VaadinUtils.showErrorNotification("ID d'article invalide");
             return;
         }
+        removeAll(); // Nettoyer la vue avant de charger
+        VaadinUtils.showLoading(this);
         postPresenter.chargerPost(postId);
     }
 
+    /**
+     * Affiche le contenu de l'article et déclenche le chargement des
+     * commentaires.
+     */
     @Override
     public void afficherPost(Post post) {
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -73,9 +88,14 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
             }
             this.currentPost = post;
             renderPostContent(post);
+            // Le chargement des commentaires est déclenché ici
+            commentairePresenter.chargerCommentaires(post);
         }));
     }
 
+    /**
+     * Construit et affiche le contenu principal de l'article.
+     */
     private void renderPostContent(Post post) {
         removeAll();
 
@@ -91,9 +111,11 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         );
 
         add(mainContent);
-        commentairePresenter.chargerCommentaires(post);
     }
 
+    /**
+     * Crée l'en-tête de l'article (titre, métadonnées).
+     */
     private VerticalLayout createPostHeader(Post post) {
         VerticalLayout header = new VerticalLayout();
         header.add(
@@ -103,6 +125,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         return header;
     }
 
+    /**
+     * Crée le titre de l'article.
+     */
     private H1 createPostTitle(String title) {
         H1 titleComponent = new H1(title);
         titleComponent.addClassNames(
@@ -115,6 +140,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         return titleComponent;
     }
 
+    /**
+     * Crée les métadonnées de l'article (auteur, date).
+     */
     private HorizontalLayout createPostMetadata(Post post) {
         String authorName = Optional.ofNullable(post.getAuteur())
                 .map(a -> a.getNom())
@@ -128,6 +156,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         return metadata;
     }
 
+    /**
+     * Crée le corps de l'article.
+     */
     private Div createPostBody(String content) {
         Div contentDiv = new Div(new Paragraph(content));
         contentDiv.addClassNames(
@@ -140,6 +171,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         return contentDiv;
     }
 
+    /**
+     * Crée la section des commentaires (formulaire + liste).
+     */
     private VerticalLayout createCommentsContainer() {
         VerticalLayout container = new VerticalLayout(
                 new H2("Commentaires"),
@@ -150,22 +184,31 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         return container;
     }
 
+    /**
+     * Crée le formulaire de saisie de commentaire.
+     */
     private VerticalLayout createCommentInputForm() {
         commentTextArea = new TextArea();
         commentTextArea.setPlaceholder(COMMENT_PLACEHOLDER);
         commentTextArea.setWidthFull();
 
-        Button submitButton = new Button("Publier", e -> handleCommentSubmission());
+        submitButton = new Button("Publier", e -> handleCommentSubmission());
 
         VerticalLayout formLayout = new VerticalLayout(commentTextArea, submitButton);
         formLayout.setWidthFull();
         return formLayout;
     }
 
+    /**
+     * Gère la soumission d'un commentaire (validation, désactivation bouton,
+     * feedback).
+     */
     private void handleCommentSubmission() {
+        submitButton.setEnabled(false);
         ValidationUtils.ValidationResult validation = ValidationUtils.validateContent(commentTextArea);
         if (!validation.isValid()) {
             VaadinUtils.showErrorNotification(validation.getErrorMessage());
+            submitButton.setEnabled(true);
             return;
         }
 
@@ -175,9 +218,13 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         commentairePresenter.ajouter(commentaire);
     }
 
+    /**
+     * Affiche la liste des commentaires ou un message s'il n'y en a pas.
+     */
     @Override
     public void afficherCommentaires(List<Commentaire> commentaires) {
         getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this);
             commentsSection.removeAll();
 
             if (commentaires.isEmpty()) {
@@ -190,6 +237,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         }));
     }
 
+    /**
+     * Crée une carte de commentaire.
+     */
     private Div createCommentCard(Commentaire commentaire) {
         String authorName = Optional.ofNullable(commentaire.getAuteur())
                 .map(a -> a.getNom())
@@ -207,24 +257,44 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         return card;
     }
 
+    /**
+     * Affiche un message de succès et vide le champ commentaire.
+     */
     @Override
     public void afficherMessage(String message) {
-        VaadinUtils.showSuccessNotification(message);
-        commentTextArea.clear();
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.showSuccessNotification(message);
+            commentTextArea.clear();
+            submitButton.setEnabled(true);
+        }));
     }
 
+    /**
+     * Affiche un message d'erreur.
+     */
     @Override
     public void afficherErreur(String erreur) {
-        VaadinUtils.showErrorNotification(erreur);
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.showErrorNotification(erreur);
+            submitButton.setEnabled(true);
+        }));
     }
 
+    /**
+     * Rafraîchit la liste des commentaires après ajout.
+     */
     @Override
     public void rafraichirListe() {
-        if (currentPost != null) {
-            commentairePresenter.chargerCommentaires(currentPost);
-        }
+        getUI().ifPresent(ui -> ui.access(() -> {
+            if (currentPost != null) {
+                commentairePresenter.chargerCommentaires(currentPost);
+            }
+        }));
     }
 
+    /**
+     * Affiche une erreur et redirige vers la liste des articles.
+     */
     private void showErrorAndRedirect(String errorMessage) {
         VaadinUtils.showErrorNotification(errorMessage);
         getUI().ifPresent(ui -> ui.navigate("articles"));

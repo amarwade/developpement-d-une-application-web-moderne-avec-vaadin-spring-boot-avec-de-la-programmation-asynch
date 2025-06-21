@@ -19,7 +19,10 @@ public final class EntityValidator {
     }
 
     /**
-     * Valide une entité Post
+     * Valide une entité Post.
+     *
+     * @param post L'article à valider
+     * @return Résultat de la validation
      */
     public static ValidationResult validatePost(Post post) {
         List<String> errors = new ArrayList<>();
@@ -49,7 +52,10 @@ public final class EntityValidator {
     }
 
     /**
-     * Valide une entité Message
+     * Valide une entité Message.
+     *
+     * @param message Le message à valider
+     * @return Résultat de la validation
      */
     public static ValidationResult validateMessage(Message message) {
         List<String> errors = new ArrayList<>();
@@ -83,7 +89,10 @@ public final class EntityValidator {
     }
 
     /**
-     * Valide une entité Commentaire
+     * Valide une entité Commentaire.
+     *
+     * @param commentaire Le commentaire à valider
+     * @return Résultat de la validation
      */
     public static ValidationResult validateCommentaire(Commentaire commentaire) {
         List<String> errors = new ArrayList<>();
@@ -113,7 +122,10 @@ public final class EntityValidator {
     }
 
     /**
-     * Valide une entité Utilisateur
+     * Valide une entité Utilisateur.
+     *
+     * @param utilisateur L'utilisateur à valider
+     * @return Résultat de la validation
      */
     public static ValidationResult validateUtilisateur(Utilisateur utilisateur) {
         List<String> errors = new ArrayList<>();
@@ -139,7 +151,7 @@ public final class EntityValidator {
     }
 
     /**
-     * Classe pour représenter le résultat d'une validation d'entité
+     * Classe pour représenter le résultat d'une validation d'entité.
      */
     public static class ValidationResult {
 
@@ -151,32 +163,53 @@ public final class EntityValidator {
             this.errors = errors;
         }
 
+        /**
+         * Retourne un résultat de validation valide (aucune erreur).
+         */
         public static ValidationResult success() {
             return new ValidationResult(true, new ArrayList<>());
         }
 
+        /**
+         * Retourne un résultat de validation invalide avec un message d'erreur.
+         */
         public static ValidationResult error(String error) {
             List<String> errors = new ArrayList<>();
             errors.add(error);
             return new ValidationResult(false, errors);
         }
 
+        /**
+         * Retourne un résultat de validation invalide avec une liste d'erreurs.
+         */
         public static ValidationResult error(List<String> errors) {
             return new ValidationResult(false, errors);
         }
 
+        /**
+         * Indique si la validation est réussie.
+         */
         public boolean isValid() {
             return valid;
         }
 
+        /**
+         * Retourne la liste des erreurs de validation.
+         */
         public List<String> getErrors() {
             return errors;
         }
 
+        /**
+         * Retourne la première erreur de validation, ou null s'il n'y en a pas.
+         */
         public String getFirstError() {
             return errors.isEmpty() ? null : errors.get(0);
         }
 
+        /**
+         * Retourne toutes les erreurs de validation sous forme de chaîne.
+         */
         public String getAllErrorsAsString() {
             return String.join("; ", errors);
         }

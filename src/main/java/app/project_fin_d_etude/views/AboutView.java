@@ -3,13 +3,13 @@ package app.project_fin_d_etude.views;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.MainLayout;
+import app.project_fin_d_etude.utils.VaadinUtils;
 
 /**
  * Vue "À propos" présentant les informations sur le site et le développeur.
@@ -19,6 +19,9 @@ import app.project_fin_d_etude.layout.MainLayout;
 @PageTitle("About")
 public class AboutView extends VerticalLayout {
 
+    /**
+     * Constructeur de la vue À propos.
+     */
     public AboutView() {
         setSpacing(false);
         setSizeFull();
@@ -28,7 +31,7 @@ public class AboutView extends VerticalLayout {
 
         // Conteneur principal
         VerticalLayout mainContainer = new VerticalLayout();
-        mainContainer.setWidth("80%");
+        mainContainer.setWidth("100%");
         mainContainer.setMaxWidth("1200px");
         mainContainer.addClassNames(
                 LumoUtility.Background.BASE,
@@ -37,32 +40,16 @@ public class AboutView extends VerticalLayout {
                 LumoUtility.Padding.LARGE
         );
 
-        //ajouter une ligne de séparation
-        HorizontalLayout separator = new HorizontalLayout();
-        separator.setWidth("100%");
-        separator.setHeight("2px");
-        separator.getStyle().set("background-color", "lightgray");
-        separator.addClassNames("separator");
-        mainContainer.add(separator);
+        // Séparateur supérieur
+        mainContainer.add(VaadinUtils.createSeparator("80%"));
+
         // Titre principal
-        H1 title = new H1("À PROPOS DU SITE");
+        H1 title = VaadinUtils.createPageTitle("À PROPOS DU SITE");
         title.setWidth("100%");
-        title.addClassNames(
-                "about-page-title",
-                LumoUtility.FontSize.XXXLARGE,
-                LumoUtility.FontWeight.BOLD,
-                LumoUtility.TextColor.PRIMARY,
-                LumoUtility.Margin.Bottom.LARGE,
-                LumoUtility.Border.BOTTOM,
-                LumoUtility.BorderColor.PRIMARY_50,
-                LumoUtility.Padding.Bottom.MEDIUM
-        );
-        //ajouter une ligne de séparation
-        HorizontalLayout separator1 = new HorizontalLayout();
-        separator1.setWidth("100%");
-        separator1.setHeight("2px");
-        separator1.getStyle().set("background-color", "lightgray");
-        separator1.addClassNames("separator");
+        mainContainer.add(title);
+
+        // Séparateur sous le titre
+        mainContainer.add(VaadinUtils.createSeparator("80%"));
 
         // Description du site
         Paragraph description = new Paragraph(
@@ -76,43 +63,33 @@ public class AboutView extends VerticalLayout {
                 LumoUtility.Margin.Bottom.XLARGE,
                 LumoUtility.Padding.Horizontal.LARGE
         );
+        mainContainer.add(description);
 
         // Section Fonctionnalités
-        VerticalLayout featuresSection = createSection("Fonctionnalités principales");
-        Paragraph features = new Paragraph();
-        features.getElement().setProperty("innerHTML",
+        VerticalLayout featuresSection = createSection("Fonctionnalités principales",
                 "• Publication d'articles<br>"
                 + "• Système de commentaires<br>"
                 + "• Catégorisation du contenu<br>"
                 + "• Interface responsive<br>"
-                + "• Authentification sécurisée"
-        );
-        features.getStyle().set("text-align", "left");
-        featuresSection.add(features);
+                + "• Authentification sécurisée");
+        mainContainer.add(featuresSection);
 
         // Section Technologies
-        VerticalLayout techSection = createSection("Technologies utilisées");
-        Paragraph technologies = new Paragraph();
-        technologies.getElement().setProperty("innerHTML",
+        VerticalLayout techSection = createSection("Technologies utilisées",
                 "• Java Spring Boot<br>"
                 + "• Vaadin Framework<br>"
                 + "• PostgreSQL<br>"
                 + "• Keycloak<br>"
-                + "• HTML/CSS/JavaScript"
-        );
-        technologies.getStyle().set("text-align", "left");
-        techSection.add(technologies);
-
-        // Ajout des sections au conteneur principal
-        mainContainer.add(title);
-        mainContainer.add(separator1);
-        mainContainer.add(description);
-        mainContainer.add(featuresSection);
+                + "• HTML/CSS/JavaScript");
         mainContainer.add(techSection);
+
         add(mainContainer);
     }
 
-    private VerticalLayout createSection(String title) {
+    /**
+     * Crée une section stylée avec un titre et un contenu HTML.
+     */
+    private VerticalLayout createSection(String title, String htmlContent) {
         VerticalLayout section = new VerticalLayout();
         section.setWidthFull();
         section.setSpacing(true);
@@ -131,7 +108,11 @@ public class AboutView extends VerticalLayout {
                 LumoUtility.Margin.Bottom.MEDIUM
         );
 
-        section.add(sectionTitle);
+        Paragraph content = new Paragraph();
+        content.getElement().setProperty("innerHTML", htmlContent);
+        content.getStyle().set("text-align", "left");
+
+        section.add(sectionTitle, content);
         return section;
     }
 }

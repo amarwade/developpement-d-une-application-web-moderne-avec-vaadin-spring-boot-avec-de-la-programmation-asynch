@@ -1,14 +1,14 @@
 package app.project_fin_d_etude.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
-
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * Gestionnaire d'exceptions global pour l'application. Intercepte toutes les
@@ -19,22 +19,20 @@ public class GlobalExceptionHandler {
 
     private static final Logger logger = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
+    // Constantes pour les clés de la réponse
+    private static final String KEY_ERROR = "error";
+    private static final String KEY_MESSAGE = "message";
+    private static final String KEY_STATUS = "status";
+    private static final String KEY_TIMESTAMP = "timestamp";
+
     /**
      * Gère les exceptions de validation (IllegalArgumentException)
      */
     @org.springframework.web.bind.annotation.ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, Object>> handleIllegalArgumentException(
             IllegalArgumentException ex, WebRequest request) {
-
         logger.warn("Erreur de validation: {}", ex.getMessage());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Erreur de validation");
-        response.put("message", ex.getMessage());
-        response.put("status", HttpStatus.BAD_REQUEST.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.badRequest().body(response);
+        return buildResponse("Erreur de validation", ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 
     /**
@@ -43,16 +41,8 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(jakarta.persistence.EntityNotFoundException.class)
     public ResponseEntity<Map<String, Object>> handleEntityNotFoundException(
             jakarta.persistence.EntityNotFoundException ex, WebRequest request) {
-
         logger.warn("Ressource non trouvée: {}", ex.getMessage());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Ressource non trouvée");
-        response.put("message", ex.getMessage());
-        response.put("status", HttpStatus.NOT_FOUND.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(response);
+        return buildResponse("Ressource non trouvée", ex.getMessage(), HttpStatus.NOT_FOUND);
     }
 
     /**
@@ -61,16 +51,8 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.security.access.AccessDeniedException.class)
     public ResponseEntity<Map<String, Object>> handleAccessDeniedException(
             org.springframework.security.access.AccessDeniedException ex, WebRequest request) {
-
         logger.warn("Accès refusé: {}", ex.getMessage());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Accès refusé");
-        response.put("message", "Vous n'avez pas les permissions nécessaires pour cette action");
-        response.put("status", HttpStatus.FORBIDDEN.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(response);
+        return buildResponse("Accès refusé", "Vous n'avez pas les permissions nécessaires pour cette action", HttpStatus.FORBIDDEN);
     }
 
     /**
@@ -79,16 +61,8 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.security.core.AuthenticationException.class)
     public ResponseEntity<Map<String, Object>> handleAuthenticationException(
             org.springframework.security.core.AuthenticationException ex, WebRequest request) {
-
         logger.warn("Erreur d'authentification: {}", ex.getMessage());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Erreur d'authentification");
-        response.put("message", "Veuillez vous authentifier pour accéder à cette ressource");
-        response.put("status", HttpStatus.UNAUTHORIZED.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(response);
+        return buildResponse("Erreur d'authentification", "Veuillez vous authentifier pour accéder à cette ressource", HttpStatus.UNAUTHORIZED);
     }
 
     /**
@@ -97,16 +71,8 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(java.sql.SQLException.class)
     public ResponseEntity<Map<String, Object>> handleSQLException(
             java.sql.SQLException ex, WebRequest request) {
-
         logger.error("Erreur de base de données: {}", ex.getMessage(), ex);
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Erreur de base de données");
-        response.put("message", "Une erreur s'est produite lors de l'accès aux données");
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        return buildResponse("Erreur de base de données", "Une erreur s'est produite lors de l'accès aux données", HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     /**
@@ -115,16 +81,8 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(org.springframework.dao.DataIntegrityViolationException.class)
     public ResponseEntity<Map<String, Object>> handleDataIntegrityViolationException(
             org.springframework.dao.DataIntegrityViolationException ex, WebRequest request) {
-
         logger.warn("Violation d'intégrité des données: {}", ex.getMessage());
-
-        Map<String, Object> response = new HashMap<>();
-        response.put("error", "Violation d'intégrité des données");
-        response.put("message", "Cette ressource existe déjà ou ne peut pas être supprimée");
-        response.put("status", HttpStatus.CONFLICT.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(response);
+        return buildResponse("Violation d'intégrité des données", "Cette ressource existe déjà ou ne peut pas être supprimée", HttpStatus.CONFLICT);
     }
 
     /**
@@ -133,15 +91,19 @@ public class GlobalExceptionHandler {
     @org.springframework.web.bind.annotation.ExceptionHandler(Exception.class)
     public ResponseEntity<Map<String, Object>> handleGenericException(
             Exception ex, WebRequest request) {
-
         logger.error("Erreur inattendue: {}", ex.getMessage(), ex);
+        return buildResponse("Erreur interne du serveur", "Une erreur inattendue s'est produite", HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
+    /**
+     * Méthode utilitaire pour construire la réponse d'erreur.
+     */
+    private ResponseEntity<Map<String, Object>> buildResponse(String error, String message, HttpStatus status) {
         Map<String, Object> response = new HashMap<>();
-        response.put("error", "Erreur interne du serveur");
-        response.put("message", "Une erreur inattendue s'est produite");
-        response.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        response.put("timestamp", System.currentTimeMillis());
-
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
+        response.put(KEY_ERROR, error);
+        response.put(KEY_MESSAGE, message);
+        response.put(KEY_STATUS, status.value());
+        response.put(KEY_TIMESTAMP, System.currentTimeMillis());
+        return ResponseEntity.status(status).body(response);
     }
 }

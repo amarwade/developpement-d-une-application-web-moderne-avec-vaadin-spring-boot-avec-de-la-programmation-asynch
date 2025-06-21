@@ -6,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import com.vaadin.flow.component.grid.Grid;
 import com.vaadin.flow.component.html.H1;
+import com.vaadin.flow.component.html.Paragraph;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -17,22 +18,30 @@ import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.presenter.MessagePresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 
+/**
+ * Vue d'administration des messages : affichage automatique et gestion.
+ */
 @Route(value = "admin/messages", layout = AdminLayout.class)
 @PageTitle("Gestion des messages - Administration")
 public class AdminMessagesView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private final MessagePresenter messagePresenter;
     private Grid<Message> grid;
+    private final Paragraph noMessagesMessage = new Paragraph("Aucun message à afficher.");
 
     @Autowired
     public AdminMessagesView(MessagePresenter messagePresenter) {
         this.messagePresenter = messagePresenter;
         this.messagePresenter.setView(this);
         configureGrid();
-        add(grid);
+        add(createMainContent());
+        VaadinUtils.showLoading(this);
         messagePresenter.chargerMessages();
     }
 
+    /**
+     * Crée le titre principal de la page.
+     */
     private H1 createPageTitle() {
         H1 pageTitle = new H1("GESTION DES MESSAGES");
         pageTitle.addClassNames(
@@ -45,6 +54,9 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
         return pageTitle;
     }
 
+    /**
+     * Crée le layout principal (titre, section, grid).
+     */
     private VerticalLayout createMainContent() {
         VerticalLayout mainContent = new VerticalLayout();
         mainContent.setWidth("100%");
@@ -63,6 +75,9 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
         return mainContent;
     }
 
+    /**
+     * Crée la section contenant la grille des messages.
+     */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
         contentSection.setWidth("90%");
@@ -74,6 +89,9 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
         );
 
         contentSection.add(grid);
+        noMessagesMessage.addClassNames(LumoUtility.TextColor.SECONDARY, LumoUtility.TextAlignment.CENTER);
+        noMessagesMessage.setVisible(false);
+        contentSection.add(noMessagesMessage);
         return contentSection;
     }
 
@@ -88,16 +106,34 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
         grid.addColumn(Message::isLu).setHeader("Lu");
     }
 
+    /**
+     * Affiche les messages dans la grille, ou un message si aucun message.
+     */
     @Override
     public void afficherMessages(List<Message> messages) {
-        grid.setItems(messages);
+        getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this);
+            if (messages == null || messages.isEmpty()) {
+                grid.setItems(List.of());
+                noMessagesMessage.setVisible(true);
+            } else {
+                grid.setItems(messages);
+                noMessagesMessage.setVisible(false);
+            }
+        }));
     }
 
+    /**
+     * Affiche un message de succès.
+     */
     @Override
     public void afficherMessage(String message) {
         VaadinUtils.showSuccessNotification(message);
     }
 
+    /**
+     * Affiche un message d'erreur.
+     */
     @Override
     public void afficherErreur(String erreur) {
         VaadinUtils.showErrorNotification(erreur);

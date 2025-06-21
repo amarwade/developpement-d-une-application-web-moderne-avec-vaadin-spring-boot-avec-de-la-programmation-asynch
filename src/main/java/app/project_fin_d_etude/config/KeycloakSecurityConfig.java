@@ -19,6 +19,21 @@ import org.springframework.security.web.authentication.session.SessionAuthentica
 @EnableMethodSecurity(jsr250Enabled = true, securedEnabled = true)
 public class KeycloakSecurityConfig {
 
+    // Constantes pour les chemins et URLs
+    private static final String[] STATIC_RESOURCES = {
+        "/VAADIN/**", "/HEARTBEAT/**", "/UIDL/**", "/PUSH/**",
+        "/css/**", "/js/**", "/images/**",
+        "/", "/about", "/contact"
+    };
+    private static final String LOGIN_PAGE = "/oauth2/authorization/keycloak";
+    private static final String DEFAULT_SUCCESS_URL = "/";
+    private static final String LOGOUT_SUCCESS_URL = "/?logout";
+    private static final String COOKIE_JSESSIONID = "JSESSIONID";
+
+    /**
+     * Fournit le provider d'authentification Keycloak avec un mapping simple
+     * des rôles.
+     */
     @Bean
     public KeycloakAuthenticationProvider keycloakAuthenticationProvider() {
         KeycloakAuthenticationProvider provider = new KeycloakAuthenticationProvider();
@@ -26,42 +41,53 @@ public class KeycloakSecurityConfig {
         return provider;
     }
 
+    /**
+     * Stratégie de gestion de session pour Keycloak.
+     */
     @Bean
     protected SessionAuthenticationStrategy sessionAuthenticationStrategy() {
         return new RegisterSessionAuthenticationStrategy(new SessionRegistryImpl());
     }
 
+    /**
+     * Configuration principale de la sécurité Spring (filtrage, login, logout,
+     * etc).
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // Désactive la protection CSRF (Vaadin gère déjà la sécurité côté client)
                 .csrf(csrf -> csrf.disable())
+                // Gestion de la session
                 .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
                 .sessionAuthenticationStrategy(sessionAuthenticationStrategy())
                 )
+                // Autorisation des requêtes
                 .authorizeHttpRequests(auth -> auth
-                // 💡 Autoriser ressources Vaadin + statiques
-                .requestMatchers(
-                        "/VAADIN/**", "/HEARTBEAT/**", "/UIDL/**", "/PUSH/**",
-                        "/css/**", "/js/**", "/images/**",
-                        "/", "/about", "/contact"
-                ).permitAll()
+                .requestMatchers(STATIC_RESOURCES).permitAll()
                 .anyRequest().authenticated()
                 )
+                // Configuration OAuth2 (Keycloak)
                 .oauth2Login(oauth2 -> oauth2
-                .loginPage("/oauth2/authorization/keycloak")
-                .defaultSuccessUrl("/articles", true)
+                .loginPage(LOGIN_PAGE)
+                .defaultSuccessUrl(DEFAULT_SUCCESS_URL, true)
                 )
+                // Configuration du logout
                 .logout(logout -> logout
-                .logoutSuccessUrl("/?logout")
+                .logoutSuccessUrl(LOGOUT_SUCCESS_URL)
                 .invalidateHttpSession(true)
                 .clearAuthentication(true)
-                .deleteCookies("JSESSIONID")
+                .deleteCookies(COOKIE_JSESSIONID)
                 );
 
         return http.build();
     }
 
+    /**
+     * Permet à Keycloak d'utiliser la configuration Spring Boot
+     * (application.properties/yml).
+     */
     @Bean
     public KeycloakSpringBootConfigResolver keycloakConfigResolver() {
         return new KeycloakSpringBootConfigResolver();

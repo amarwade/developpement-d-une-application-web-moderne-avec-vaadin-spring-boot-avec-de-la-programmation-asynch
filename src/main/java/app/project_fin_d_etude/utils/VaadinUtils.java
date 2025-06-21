@@ -18,28 +18,48 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.function.SerializableConsumer;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
+/**
+ * Utilitaires pour la création de composants Vaadin réutilisables et stylés.
+ */
 public class VaadinUtils {
 
     private static final int NOTIFICATION_DURATION = 3000;
     private static final String LOADING_TEXT = "Chargement en cours...";
 
+    // =================== Notifications ===================
+    /**
+     * Affiche une notification personnalisée.
+     */
     public static void showNotification(String message, NotificationVariant variant) {
         Notification notification = Notification.show(message, NOTIFICATION_DURATION, Notification.Position.TOP_CENTER);
         notification.addThemeVariants(variant);
     }
 
+    /**
+     * Affiche une notification de succès.
+     */
     public static void showSuccessNotification(String message) {
         showNotification(message, NotificationVariant.LUMO_SUCCESS);
     }
 
+    /**
+     * Affiche une notification d'erreur.
+     */
     public static void showErrorNotification(String message) {
         showNotification(message, NotificationVariant.LUMO_ERROR);
     }
 
+    /**
+     * Affiche une notification d'avertissement.
+     */
     public static void showWarningNotification(String message) {
         showNotification(message, NotificationVariant.LUMO_WARNING);
     }
 
+    // =================== Boutons ===================
+    /**
+     * Crée un bouton principal stylé.
+     */
     public static Button createPrimaryButton(String text) {
         Button button = new Button(text);
         button.addClassNames(
@@ -56,6 +76,9 @@ public class VaadinUtils {
         return button;
     }
 
+    /**
+     * Crée un bouton secondaire stylé.
+     */
     public static Button createSecondaryButton(String text) {
         Button button = new Button(text);
         button.addClassNames(
@@ -72,6 +95,10 @@ public class VaadinUtils {
         return button;
     }
 
+    // =================== Titres ===================
+    /**
+     * Crée un titre de page (H1) stylé.
+     */
     public static H1 createPageTitle(String text) {
         H1 title = new H1(text);
         title.addClassNames(
@@ -84,6 +111,9 @@ public class VaadinUtils {
         return title;
     }
 
+    /**
+     * Crée un titre de section (H2) stylé.
+     */
     public static H2 createSectionTitle(String text) {
         H2 title = new H2(text);
         title.addClassNames(
@@ -97,6 +127,9 @@ public class VaadinUtils {
         return title;
     }
 
+    /**
+     * Crée un sous-titre (H3) stylé.
+     */
     public static H3 createSubTitle(String text) {
         H3 title = new H3(text);
         title.addClassNames(
@@ -108,6 +141,10 @@ public class VaadinUtils {
         return title;
     }
 
+    // =================== Layouts et sections ===================
+    /**
+     * Crée un séparateur horizontal stylé.
+     */
     public static HorizontalLayout createSeparator(String width) {
         HorizontalLayout separator = new HorizontalLayout();
         separator.setWidth(width);
@@ -117,6 +154,9 @@ public class VaadinUtils {
         return separator;
     }
 
+    /**
+     * Crée une section verticale stylée.
+     */
     public static VerticalLayout createSection(String width, FlexComponent.Alignment alignment) {
         VerticalLayout section = new VerticalLayout();
         section.setWidth(width);
@@ -133,6 +173,9 @@ public class VaadinUtils {
         return section;
     }
 
+    /**
+     * Crée une section de formulaire stylée.
+     */
     public static VerticalLayout createFormSection() {
         VerticalLayout section = new VerticalLayout();
         section.setWidth("50%");
@@ -148,6 +191,10 @@ public class VaadinUtils {
         return section;
     }
 
+    // =================== Champs de formulaire ===================
+    /**
+     * Crée un champ texte stylé.
+     */
     public static TextField createTextField(String label, String placeholder) {
         TextField field = new TextField(label);
         field.setPlaceholder(placeholder);
@@ -161,6 +208,9 @@ public class VaadinUtils {
         return field;
     }
 
+    /**
+     * Crée une zone de texte stylée.
+     */
     public static TextArea createTextArea(String label, String placeholder, String height) {
         TextArea area = new TextArea(label);
         area.setPlaceholder(placeholder);
@@ -175,6 +225,10 @@ public class VaadinUtils {
         return area;
     }
 
+    // =================== Dialogues et overlays ===================
+    /**
+     * Affiche une boîte de dialogue de confirmation avec callback.
+     */
     public static void showConfirmationDialog(String title, String message, SerializableConsumer<Boolean> onConfirm) {
         Dialog dialog = new Dialog();
         dialog.setHeaderTitle(title);
@@ -196,6 +250,9 @@ public class VaadinUtils {
         dialog.open();
     }
 
+    /**
+     * Ajoute des classes CSS responsives à un composant.
+     */
     public static void addResponsiveClass(Component component) {
         component.addClassNames(
                 "animate__animated",
@@ -204,6 +261,10 @@ public class VaadinUtils {
         );
     }
 
+    // =================== Loading ===================
+    /**
+     * Crée un overlay de chargement stylé.
+     */
     public static Div createLoadingOverlay() {
         Div overlay = new Div();
         overlay.addClassNames(
@@ -224,6 +285,9 @@ public class VaadinUtils {
         return overlay;
     }
 
+    /**
+     * Affiche un overlay de chargement sur un composant parent.
+     */
     public static void showLoading(Component parent) {
         Div overlay = createLoadingOverlay();
         if (parent instanceof Div) {
@@ -231,6 +295,9 @@ public class VaadinUtils {
         }
     }
 
+    /**
+     * Masque l'overlay de chargement sur un composant parent.
+     */
     public static void hideLoading(Component parent) {
         parent.getChildren()
                 .filter(component -> component instanceof Div

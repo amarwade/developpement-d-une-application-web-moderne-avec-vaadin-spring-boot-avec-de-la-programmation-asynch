@@ -19,6 +19,12 @@ public class CommentaireService {
         this.commentaireRepository = commentaireRepository;
     }
 
+    /**
+     * Récupère les commentaires associés à un post de façon asynchrone.
+     *
+     * @param post Le post concerné
+     * @return Future contenant la liste des commentaires
+     */
     @Async
     public CompletableFuture<List<Commentaire>> getCommentairesByPost(Post post) {
         if (post == null) {
@@ -27,17 +33,27 @@ public class CommentaireService {
         return CompletableFuture.completedFuture(commentaireRepository.findByPost(post));
     }
 
+    /**
+     * Sauvegarde un commentaire après validation, de façon asynchrone.
+     *
+     * @param commentaire Le commentaire à sauvegarder
+     * @return Future contenant le commentaire sauvegardé
+     */
     @Async
     public CompletableFuture<Commentaire> save(Commentaire commentaire) {
-        // Validation de l'entité avant sauvegarde
         EntityValidator.ValidationResult validationResult = EntityValidator.validateCommentaire(commentaire);
         if (!validationResult.isValid()) {
             throw new IllegalArgumentException("Commentaire invalide: " + validationResult.getAllErrorsAsString());
         }
-
         return CompletableFuture.completedFuture(commentaireRepository.save(commentaire));
     }
 
+    /**
+     * Supprime un commentaire par son identifiant, de façon asynchrone.
+     *
+     * @param id L'identifiant du commentaire
+     * @return Future complétée une fois la suppression effectuée
+     */
     @Async
     public CompletableFuture<Void> delete(Long id) {
         if (id == null) {

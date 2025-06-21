@@ -10,11 +10,25 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import java.time.format.DateTimeFormatter;
+import java.util.Optional;
 import java.util.function.Consumer;
 
 public class BlogPostCard extends Div {
 
+    // Longueur maximale de l'extrait du contenu affiché
+    private static final int MAX_EXCERPT_LENGTH = 200;
+    // Format d'affichage de la date de publication
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
+
+    /**
+     * Construit une carte d'aperçu d'un article de blog.
+     *
+     * @param post L'article à afficher
+     * @param onDetailClick Action à exécuter lors du clic sur le bouton "Voir
+     * le détail"
+     */
     public BlogPostCard(Post post, Consumer<Post> onDetailClick) {
+        // Style général de la carte
         addClassNames(
                 LumoUtility.Background.CONTRAST_80,
                 LumoUtility.TextColor.PRIMARY,
@@ -23,28 +37,67 @@ public class BlogPostCard extends Div {
         );
         getStyle().set("border", "1px solid var(--lumo-contrast-10%)");
 
-        H3 cardTitle = new H3(post.getTitre());
-        cardTitle.addClassNames(LumoUtility.FontSize.XLARGE, LumoUtility.Margin.NONE);
+        // Création des sous-composants de la carte
+        H3 cardTitle = createTitle(post);
+        Paragraph cardMeta = createMeta(post);
+        Paragraph cardDescription = createDescription(post);
+        Button detailButton = createDetailButton(post, onDetailClick);
 
-        // Auteur et date
-        String auteur = post.getAuteur() != null ? post.getAuteur().getNom() : "Auteur inconnu";
-        String date = post.getDatePublication() != null ? post.getDatePublication().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "Date inconnue";
-        Paragraph cardMeta = new Paragraph("Par " + auteur + " • " + date);
-        cardMeta.addClassNames(
+        // Organisation verticale des éléments
+        VerticalLayout cardContent = new VerticalLayout(cardTitle, cardMeta, cardDescription, detailButton);
+        cardContent.setSpacing(false);
+        cardContent.setPadding(false);
+        cardContent.setAlignItems(FlexComponent.Alignment.START);
+
+        add(cardContent);
+    }
+
+    /**
+     * Crée le titre de la carte à partir du titre du post.
+     */
+    private H3 createTitle(Post post) {
+        H3 title = new H3(Optional.ofNullable(post.getTitre()).orElse("Titre inconnu"));
+        title.addClassNames(LumoUtility.FontSize.XLARGE, LumoUtility.Margin.NONE);
+        return title;
+    }
+
+    /**
+     * Crée la ligne d'information auteur/date.
+     */
+    private Paragraph createMeta(Post post) {
+        String auteur = Optional.ofNullable(post.getAuteur())
+                .map(a -> Optional.ofNullable(a.getNom()).orElse("Auteur inconnu"))
+                .orElse("Auteur inconnu");
+        String date = Optional.ofNullable(post.getDatePublication())
+                .map(d -> d.format(DATE_FORMATTER))
+                .orElse("Date inconnue");
+        Paragraph meta = new Paragraph("Par " + auteur + " • " + date);
+        meta.addClassNames(
                 LumoUtility.FontSize.SMALL,
                 LumoUtility.Margin.Top.SMALL,
                 LumoUtility.Margin.Bottom.MEDIUM,
                 LumoUtility.TextColor.SECONDARY
         );
+        return meta;
+    }
 
-        // Extrait du contenu (200 caractères max)
-        String contenu = post.getContenu();
-        String extrait = contenu.length() > 200 ? contenu.substring(0, 200) + "..." : contenu;
-        Paragraph cardDescription = new Paragraph(extrait);
-        cardDescription.addClassNames(LumoUtility.FontSize.MEDIUM);
+    /**
+     * Crée l'extrait du contenu de l'article (tronqué si nécessaire).
+     */
+    private Paragraph createDescription(Post post) {
+        String contenu = Optional.ofNullable(post.getContenu()).orElse("");
+        String extrait = contenu.length() > MAX_EXCERPT_LENGTH ? contenu.substring(0, MAX_EXCERPT_LENGTH) + "..." : contenu;
+        Paragraph description = new Paragraph(extrait);
+        description.addClassNames(LumoUtility.FontSize.MEDIUM);
+        return description;
+    }
 
-        Button detailButton = new Button("Voir le détail", e -> onDetailClick.accept(post));
-        detailButton.addClassNames(
+    /**
+     * Crée le bouton permettant d'accéder au détail de l'article.
+     */
+    private Button createDetailButton(Post post, Consumer<Post> onDetailClick) {
+        Button button = new Button("Voir le détail", e -> onDetailClick.accept(post));
+        button.addClassNames(
                 LumoUtility.Margin.Top.MEDIUM,
                 LumoUtility.Background.PRIMARY,
                 LumoUtility.TextColor.PRIMARY_CONTRAST,
@@ -52,12 +105,6 @@ public class BlogPostCard extends Div {
                 LumoUtility.Padding.Vertical.XSMALL,
                 LumoUtility.BorderRadius.SMALL
         );
-
-        VerticalLayout cardContent = new VerticalLayout(cardTitle, cardMeta, cardDescription, detailButton);
-        cardContent.setSpacing(false);
-        cardContent.setPadding(false);
-        cardContent.setAlignItems(FlexComponent.Alignment.START);
-
-        add(cardContent);
+        return button;
     }
 }

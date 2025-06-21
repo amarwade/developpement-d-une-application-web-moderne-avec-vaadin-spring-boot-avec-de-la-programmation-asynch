@@ -21,9 +21,14 @@ public final class Routes {
     // Routes d'authentification
     public static final String LOGIN = "/login";
 
-    // Méthodes utilitaires
+    /**
+     * Génère l'URL d'un article utilisateur à partir de son identifiant.
+     *
+     * @param postId L'identifiant du post
+     * @return L'URL de l'article utilisateur
+     */
     public static String getUserArticleUrl(Long postId) {
-        return "user/article/" + postId;
+        return USER_ARTICLE + "/" + postId;
     }
 
     private Routes() {

@@ -24,34 +24,47 @@ import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.model.Utilisateur;
 import app.project_fin_d_etude.presenter.PostPresenter;
+import app.project_fin_d_etude.service.UtilisateurService;
 import app.project_fin_d_etude.utils.SecurityUtils;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
-import app.project_fin_d_etude.repository.UtilisateurRepository;
 
+/**
+ * Vue permettant à l'utilisateur connecté de créer un nouvel article.
+ */
 @Route(value = "user/create-post", layout = MainLayout.class)
 @PageTitle("Créer un post")
 public class CreatePostView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
-    private final UtilisateurRepository utilisateurRepository;
+    private final UtilisateurService utilisateurService;
     private TextField titleField;
     private TextArea contentArea;
 
+    /**
+     * Constructeur de la vue de création d'article.
+     */
     @Autowired
-    public CreatePostView(PostPresenter postPresenter, UtilisateurRepository utilisateurRepository) {
+    public CreatePostView(PostPresenter postPresenter, UtilisateurService utilisateurService) {
         this.postPresenter = postPresenter;
-        this.utilisateurRepository = utilisateurRepository;
+        this.utilisateurService = utilisateurService;
         this.postPresenter.setView(this);
         configureLayout();
         add(createMainContent());
     }
 
+    /**
+     * Configure le layout principal de la vue.
+     */
     private void configureLayout() {
         setSizeFull();
         addClassNames(LumoUtility.Background.CONTRAST_5);
     }
 
+    /**
+     * Crée le contenu principal de la page (titre, infos utilisateur,
+     * formulaire).
+     */
     private VerticalLayout createMainContent() {
         VerticalLayout mainContent = new VerticalLayout();
         mainContent.setWidth("100%");
@@ -67,6 +80,9 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         return mainContent;
     }
 
+    /**
+     * Affiche les informations de l'utilisateur connecté.
+     */
     private Component createUserInfoSection() {
         String userEmail = SecurityUtils.getCurrentUserEmail();
         VerticalLayout section = new VerticalLayout();
@@ -84,6 +100,9 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         return section;
     }
 
+    /**
+     * Crée le formulaire de création d'article.
+     */
     private VerticalLayout createPostForm() {
         titleField = new TextField("Titre");
         titleField.setPlaceholder("Titre de l'article");
@@ -102,50 +121,33 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         return formLayout;
     }
 
+    /**
+     * Logique de publication d'un article après validation du formulaire.
+     */
     private void publierArticle() {
         if (!validerFormulaire()) {
             return;
         }
 
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
+            VaadinUtils.showErrorNotification("Impossible de récupérer les informations de l'utilisateur connecté.");
+            return;
+        }
+
+        Utilisateur auteur = utilisateurService.findOrCreateAuteur(oidcUser);
+
         Post post = new Post();
         post.setTitre(titleField.getValue().trim());
         post.setContenu(contentArea.getValue().trim());
-
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
-            Notification.show("Impossible de récupérer les informations de l'utilisateur connecté.");
-            return;
-        }
-
-        String email = oidcUser.getEmail();
-        if (email == null) {
-            Notification.show("L'email de l'utilisateur connecté est introuvable.");
-            return;
-        }
-
-        // Find or create user
-        Utilisateur auteur = utilisateurRepository.findByEmail(email)
-                .orElseGet(() -> {
-                    Utilisateur newUser = new Utilisateur();
-                    newUser.setEmail(email);
-
-                    String nom = oidcUser.getGivenName();
-                    String prenom = oidcUser.getFamilyName();
-                    String displayName = ((nom != null ? nom : "") + " " + (prenom != null ? prenom : "")).trim();
-                    newUser.setNom(displayName.isBlank() ? oidcUser.getPreferredUsername() : displayName);
-
-                    newUser.setActif(true);
-                    newUser.setRole(Utilisateur.Role.UTILISATEUR);
-                    newUser.setDateCreation(java.time.LocalDateTime.now());
-                    return utilisateurRepository.save(newUser);
-                });
-
         post.setAuteur(auteur);
 
-        VaadinUtils.showLoading(this);
         postPresenter.publierPost(post);
     }
 
+    /**
+     * Valide le formulaire de création d'article.
+     */
     private boolean validerFormulaire() {
         ValidationUtils.ValidationResult titleResult = ValidationUtils.validateTitle(titleField);
         if (!titleResult.isValid()) {
@@ -162,6 +164,9 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         return true;
     }
 
+    /**
+     * Affiche un message de succès et vide le formulaire.
+     */
     @Override
     public void afficherMessage(String message) {
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -170,6 +175,9 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         }));
     }
 
+    /**
+     * Affiche un message d'erreur.
+     */
     @Override
     public void afficherErreur(String erreur) {
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -177,6 +185,9 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         }));
     }
 
+    /**
+     * Vide le formulaire de création d'article.
+     */
     @Override
     public void viderFormulaire() {
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -185,6 +196,9 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         }));
     }
 
+    /**
+     * Redirige vers la page de détail de l'article nouvellement créé.
+     */
     @Override
     public void redirigerVersDetail(Long postId) {
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -192,7 +206,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         }));
     }
 
-    // Méthodes non utilisées
+    // Méthodes non utilisées de l'interface PostView
     @Override
     public void afficherPost(Post post) {
     }

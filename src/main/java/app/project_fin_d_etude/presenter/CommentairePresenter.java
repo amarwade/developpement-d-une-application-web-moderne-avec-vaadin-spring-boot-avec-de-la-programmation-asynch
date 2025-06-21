@@ -1,7 +1,11 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
+
 import org.springframework.stereotype.Component;
+
+import com.vaadin.flow.component.UI;
+
 import app.project_fin_d_etude.model.Commentaire;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.service.CommentaireService;
@@ -12,9 +16,11 @@ public class CommentairePresenter {
 
     @Setter
     private CommentaireView view;
-
     private final CommentaireService commentaireService;
 
+    /**
+     * Interface à implémenter par la vue pour lier le présentateur.
+     */
     public interface CommentaireView {
 
         void afficherCommentaires(List<Commentaire> commentaires);
@@ -30,90 +36,103 @@ public class CommentairePresenter {
         this.commentaireService = commentaireService;
     }
 
+    /**
+     * Charge les commentaires d'un post de façon asynchrone et met à jour la
+     * vue.
+     */
     public void chargerCommentaires(Post post) {
-        try {
-            if (view != null) {
-                commentaireService.getCommentairesByPost(post)
-                        .thenAccept(commentaires -> view.afficherCommentaires(commentaires))
-                        .exceptionally(e -> {
-                            view.afficherErreur("Erreur lors du chargement des commentaires : " + e.getMessage());
-                            return null;
-                        });
-            }
-        } catch (Exception e) {
-            if (view != null) {
-                view.afficherErreur("Erreur lors du chargement des commentaires : " + e.getMessage());
-            }
+        if (view == null) {
+            return;
         }
+        final CommentaireView currentView = this.view;
+        final UI ui = UI.getCurrent();
+
+        commentaireService.getCommentairesByPost(post)
+                .whenComplete((commentaires, ex) -> {
+                    ui.access(() -> {
+                        if (ex != null) {
+                            currentView.afficherErreur("Erreur lors du chargement des commentaires : " + ex.getMessage());
+                        } else {
+                            currentView.afficherCommentaires(commentaires);
+                        }
+                    });
+                });
     }
 
+    /**
+     * Ajoute un commentaire après validation du contenu.
+     */
     public void ajouter(Commentaire commentaire) {
-        try {
-            if (commentaire.getContenu() == null || commentaire.getContenu().trim().isEmpty()) {
-                view.afficherErreur("Le contenu du commentaire ne peut pas être vide");
-                return;
-            }
-
-            commentaireService.save(commentaire)
-                    .thenAccept(savedCommentaire -> {
-                        if (view != null) {
-                            view.afficherMessage("Commentaire ajouté avec succès");
-                            view.rafraichirListe();
-                        }
-                    })
-                    .exceptionally(e -> {
-                        view.afficherErreur("Erreur lors de l'ajout du commentaire : " + e.getMessage());
-                        return null;
-                    });
-        } catch (Exception e) {
-            if (view != null) {
-                view.afficherErreur("Erreur lors de l'ajout du commentaire : " + e.getMessage());
-            }
+        if (view == null) {
+            return;
         }
+        if (commentaire.getContenu() == null || commentaire.getContenu().trim().isEmpty()) {
+            view.afficherErreur("Le contenu du commentaire ne peut pas être vide");
+            return;
+        }
+        final CommentaireView currentView = this.view;
+        final UI ui = UI.getCurrent();
+
+        commentaireService.save(commentaire)
+                .whenComplete((savedCommentaire, ex) -> {
+                    ui.access(() -> {
+                        if (ex != null) {
+                            currentView.afficherErreur("Erreur lors de l'ajout du commentaire : " + ex.getMessage());
+                        } else {
+                            currentView.afficherMessage("Commentaire ajouté avec succès");
+                            currentView.rafraichirListe();
+                        }
+                    });
+                });
     }
 
+    /**
+     * Supprime un commentaire par son identifiant.
+     */
     public void supprimer(Commentaire commentaire) {
-        try {
-            commentaireService.delete(commentaire.getId())
-                    .thenRun(() -> {
-                        if (view != null) {
-                            view.afficherMessage("Commentaire supprimé avec succès");
-                            view.rafraichirListe();
-                        }
-                    })
-                    .exceptionally(e -> {
-                        view.afficherErreur("Erreur lors de la suppression du commentaire : " + e.getMessage());
-                        return null;
-                    });
-        } catch (Exception e) {
-            if (view != null) {
-                view.afficherErreur("Erreur lors de la suppression du commentaire : " + e.getMessage());
-            }
+        if (view == null) {
+            return;
         }
+        final CommentaireView currentView = this.view;
+        final UI ui = UI.getCurrent();
+
+        commentaireService.delete(commentaire.getId())
+                .whenComplete((unused, ex) -> {
+                    ui.access(() -> {
+                        if (ex != null) {
+                            currentView.afficherErreur("Erreur lors de la suppression du commentaire : " + ex.getMessage());
+                        } else {
+                            currentView.afficherMessage("Commentaire supprimé avec succès");
+                            currentView.rafraichirListe();
+                        }
+                    });
+                });
     }
 
+    /**
+     * Modifie un commentaire après validation du contenu.
+     */
     public void modifier(Commentaire commentaire) {
-        try {
-            if (commentaire.getContenu() == null || commentaire.getContenu().trim().isEmpty()) {
-                view.afficherErreur("Le contenu du commentaire ne peut pas être vide");
-                return;
-            }
-
-            commentaireService.save(commentaire)
-                    .thenAccept(savedCommentaire -> {
-                        if (view != null) {
-                            view.afficherMessage("Commentaire modifié avec succès");
-                            view.rafraichirListe();
-                        }
-                    })
-                    .exceptionally(e -> {
-                        view.afficherErreur("Erreur lors de la modification du commentaire : " + e.getMessage());
-                        return null;
-                    });
-        } catch (Exception e) {
-            if (view != null) {
-                view.afficherErreur("Erreur lors de la modification du commentaire : " + e.getMessage());
-            }
+        if (view == null) {
+            return;
         }
+        if (commentaire.getContenu() == null || commentaire.getContenu().trim().isEmpty()) {
+            view.afficherErreur("Le contenu du commentaire ne peut pas être vide");
+            return;
+        }
+        final CommentaireView currentView = this.view;
+        final UI ui = UI.getCurrent();
+
+        commentaireService.save(commentaire)
+                .whenComplete((savedCommentaire, ex) -> {
+                    ui.access(() -> {
+                        if (ex != null) {
+                            currentView.afficherErreur("Erreur lors de la modification du commentaire : " + ex.getMessage());
+                        } else {
+                            currentView.afficherMessage("Commentaire modifié avec succès");
+                            currentView.rafraichirListe();
+                        }
+                    });
+                });
     }
 }

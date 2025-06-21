@@ -19,6 +19,7 @@ public class Footer extends VerticalLayout {
                 LumoUtility.TextColor.PRIMARY,
                 LumoUtility.Padding.Vertical.MEDIUM
         );
+        addClassName("footer-sticky");
 
         // Liens de navigation
         HorizontalLayout footerLinks = new HorizontalLayout();

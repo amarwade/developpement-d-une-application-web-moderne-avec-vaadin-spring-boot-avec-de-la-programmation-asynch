@@ -15,7 +15,6 @@ public final class ValidationUtils {
     private static final Pattern EMAIL_PATTERN = Pattern.compile("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
     private static final Pattern NAME_PATTERN = Pattern.compile("^[a-zA-ZÀ-ÿ\\s'-]{2,50}$");
     private static final Pattern TITLE_PATTERN = Pattern.compile("^[a-zA-ZÀ-ÿ0-9\\s'-]{3,100}$");
-    private static final Pattern CONTENT_PATTERN = Pattern.compile("^[\\s\\S]{10,5000}$");
 
     // Messages d'erreur standardisés
     public static final String ERROR_FIELD_REQUIRED = "Ce champ est obligatoire";
@@ -41,49 +40,49 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide qu'un champ TextField n'est pas vide
+     * Valide qu'un champ TextField n'est pas vide.
      */
     public static boolean isFieldNotEmpty(TextField field) {
         return field.getValue() != null && !field.getValue().trim().isEmpty();
     }
 
     /**
-     * Valide qu'un champ TextArea n'est pas vide
+     * Valide qu'un champ TextArea n'est pas vide.
      */
     public static boolean isFieldNotEmpty(TextArea field) {
         return field.getValue() != null && !field.getValue().trim().isEmpty();
     }
 
     /**
-     * Valide qu'une chaîne n'est pas vide
+     * Valide qu'une chaîne n'est pas vide.
      */
     public static boolean isStringNotEmpty(String value) {
         return value != null && !value.trim().isEmpty();
     }
 
     /**
-     * Valide une adresse email
+     * Valide une adresse email.
      */
     public static boolean isValidEmail(String email) {
         return email != null && EMAIL_PATTERN.matcher(email).matches();
     }
 
     /**
-     * Valide un nom (prénom, nom de famille)
+     * Valide un nom (prénom, nom de famille).
      */
     public static boolean isValidName(String name) {
         return name != null && NAME_PATTERN.matcher(name.trim()).matches();
     }
 
     /**
-     * Valide un titre d'article
+     * Valide un titre d'article.
      */
     public static boolean isValidTitle(String title) {
         return title != null && TITLE_PATTERN.matcher(title.trim()).matches();
     }
 
     /**
-     * Valide le contenu d'un article ou commentaire
+     * Valide le contenu d'un article ou commentaire.
      */
     public static boolean isValidContent(String content) {
         if (content == null) {
@@ -94,7 +93,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un sujet de message
+     * Valide un sujet de message.
      */
     public static boolean isValidSubject(String subject) {
         if (subject == null) {
@@ -105,7 +104,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide la longueur d'une chaîne
+     * Valide la longueur d'une chaîne.
      */
     public static boolean isValidLength(String value, int minLength, int maxLength) {
         if (value == null) {
@@ -116,7 +115,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ TextField avec un message d'erreur personnalisé
+     * Valide un champ TextField avec un message d'erreur personnalisé.
      */
     public static ValidationResult validateTextField(TextField field, String errorMessage) {
         if (!isFieldNotEmpty(field)) {
@@ -126,7 +125,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ TextArea avec un message d'erreur personnalisé
+     * Valide un champ TextArea avec un message d'erreur personnalisé.
      */
     public static ValidationResult validateTextArea(TextArea field, String errorMessage) {
         if (!isFieldNotEmpty(field)) {
@@ -136,7 +135,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ email
+     * Valide un champ email.
      */
     public static ValidationResult validateEmail(TextField emailField) {
         if (!isFieldNotEmpty(emailField)) {
@@ -149,7 +148,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ nom
+     * Valide un champ nom.
      */
     public static ValidationResult validateName(TextField nameField) {
         if (!isFieldNotEmpty(nameField)) {
@@ -162,7 +161,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ titre
+     * Valide un champ titre.
      */
     public static ValidationResult validateTitle(TextField titleField) {
         if (!isFieldNotEmpty(titleField)) {
@@ -175,7 +174,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ contenu
+     * Valide un champ contenu.
      */
     public static ValidationResult validateContent(TextArea contentField) {
         if (!isFieldNotEmpty(contentField)) {
@@ -192,7 +191,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Valide un champ sujet
+     * Valide un champ sujet.
      */
     public static ValidationResult validateSubject(TextField subjectField) {
         if (!isFieldNotEmpty(subjectField)) {
@@ -205,7 +204,7 @@ public final class ValidationUtils {
     }
 
     /**
-     * Classe pour représenter le résultat d'une validation
+     * Classe pour représenter le résultat d'une validation.
      */
     public static class ValidationResult {
 
@@ -217,18 +216,30 @@ public final class ValidationUtils {
             this.errorMessage = errorMessage;
         }
 
+        /**
+         * Retourne un résultat de validation valide (aucune erreur).
+         */
         public static ValidationResult success() {
             return new ValidationResult(true, null);
         }
 
+        /**
+         * Retourne un résultat de validation invalide avec un message d'erreur.
+         */
         public static ValidationResult error(String message) {
             return new ValidationResult(false, message);
         }
 
+        /**
+         * Indique si la validation est réussie.
+         */
         public boolean isValid() {
             return valid;
         }
 
+        /**
+         * Retourne le message d'erreur de validation, ou null si aucune erreur.
+         */
         public String getErrorMessage() {
             return errorMessage;
         }

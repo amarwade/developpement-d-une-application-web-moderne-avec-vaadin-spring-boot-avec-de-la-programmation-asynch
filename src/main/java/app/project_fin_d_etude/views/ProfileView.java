@@ -15,17 +15,66 @@ import com.vaadin.flow.theme.lumo.LumoUtility;
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.utils.VaadinUtils;
 
+/**
+ * Vue de profil utilisateur : affiche les informations Keycloak de
+ * l'utilisateur connecté.
+ */
 @Route(value = "user/profile", layout = MainLayout.class)
 @PageTitle("Mon Profil")
 public class ProfileView extends VerticalLayout {
 
+    /**
+     * Construit la vue profil et affiche les informations Keycloak de
+     * l'utilisateur connecté.
+     */
     public ProfileView() {
         setSizeFull();
         setAlignItems(Alignment.CENTER);
         setJustifyContentMode(JustifyContentMode.CENTER);
         addClassNames(LumoUtility.Padding.LARGE, LumoUtility.Background.CONTRAST_5);
 
-        VerticalLayout card = new VerticalLayout();
+        add(createMainSection());
+        add(createProfileCard());
+    }
+
+    /**
+     * Crée la section principale (titre, séparateurs).
+     */
+    private VerticalLayout createMainSection() {
+        final VerticalLayout mainSection = new VerticalLayout();
+        mainSection.setWidth("100%");
+        mainSection.setAlignItems(Alignment.CENTER);
+        mainSection.addClassNames(
+                LumoUtility.Padding.Vertical.LARGE,
+                LumoUtility.Border.ALL,
+                LumoUtility.BorderColor.CONTRAST
+        );
+        mainSection.add(VaadinUtils.createSeparator("80%"));
+        mainSection.add(createMainTitle());
+        mainSection.add(VaadinUtils.createSeparator("80%"));
+        return mainSection;
+    }
+
+    /**
+     * Crée le titre principal de la page profil.
+     */
+    private H1 createMainTitle() {
+        final H1 title = new H1("INFORMATIONS PERSONNELLES");
+        title.addClassNames(
+                LumoUtility.FontSize.XXXLARGE,
+                LumoUtility.TextColor.PRIMARY,
+                LumoUtility.TextAlignment.CENTER,
+                LumoUtility.Margin.Bottom.MEDIUM,
+                LumoUtility.FontWeight.BOLD
+        );
+        return title;
+    }
+
+    /**
+     * Crée la carte d'affichage du profil utilisateur connecté.
+     */
+    private VerticalLayout createProfileCard() {
+        final VerticalLayout card = new VerticalLayout();
         card.setPadding(true);
         card.setSpacing(false);
         card.setAlignItems(Alignment.START);
@@ -38,54 +87,20 @@ public class ProfileView extends VerticalLayout {
         card.setMaxWidth("800px");
         card.setWidthFull();
 
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        final Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication != null && authentication.isAuthenticated() && authentication.getPrincipal() instanceof OidcUser oidcUser) {
-
             card.add(new H2("Profil Utilisateur"));
-
-            String nom = oidcUser.getGivenName();
-            String prenom = oidcUser.getFamilyName();
-            String email = oidcUser.getEmail();
-            String username = oidcUser.getPreferredUsername();
-
+            final String nom = oidcUser.getGivenName();
+            final String prenom = oidcUser.getFamilyName();
+            final String email = oidcUser.getEmail();
+            final String username = oidcUser.getPreferredUsername();
             card.add(new Paragraph("Nom : " + (nom != null ? nom : "Non renseigné")));
             card.add(new Paragraph("Prénom : " + (prenom != null ? prenom : "Non renseigné")));
             card.add(new Paragraph("Email : " + (email != null ? email : "Non renseigné")));
             card.add(new Paragraph("Nom d'utilisateur : " + (username != null ? username : "Non renseigné")));
+        } else {
+            card.add(new Paragraph("Aucune information de profil disponible. Veuillez vous reconnecter."));
         }
-        add(createMainSection());
-        add(card);
-    }
-
-    private VerticalLayout createMainSection() {
-        VerticalLayout mainSection = new VerticalLayout();
-        mainSection.setWidth("100%");
-        mainSection.setAlignItems(Alignment.CENTER);
-        mainSection.addClassNames(
-                LumoUtility.Padding.Vertical.LARGE,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.CONTRAST
-        );
-
-        // Premier séparateur (au-dessus du titre)
-        mainSection.add(VaadinUtils.createSeparator("80%"));
-
-        mainSection.add(createMainTitle());
-
-        // Deuxième séparateur (en-dessous du titre)
-        mainSection.add(VaadinUtils.createSeparator("80%"));
-        return mainSection;
-    }
-
-    private H1 createMainTitle() {
-        H1 title = new H1("INFORMATIONS PERSONNELLES");
-        title.addClassNames(
-                LumoUtility.FontSize.XXXLARGE,
-                LumoUtility.TextColor.PRIMARY,
-                LumoUtility.TextAlignment.CENTER,
-                LumoUtility.Margin.Bottom.MEDIUM,
-                LumoUtility.FontWeight.BOLD
-        );
-        return title;
+        return card;
     }
 }
