@@ -14,6 +14,7 @@ import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Paragraph;
+import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
@@ -108,7 +109,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         removeAll();
 
         VerticalLayout mainContent = new VerticalLayout();
-        mainContent.setWidth("70%");
+        mainContent.setWidth("100%");
         mainContent.setDefaultHorizontalComponentAlignment(FlexComponent.Alignment.CENTER);
         mainContent.addClassNames(LumoUtility.Padding.Vertical.LARGE);
 
@@ -145,6 +146,9 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 LumoUtility.Margin.Bottom.LARGE,
                 LumoUtility.FontWeight.BOLD
         );
+        titleComponent.getStyle().set("text-align", "center");
+        titleComponent.getStyle().set("width", "100%");
+
         return titleComponent;
     }
 
@@ -155,12 +159,19 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         String authorName = Optional.ofNullable(post.getAuteur())
                 .map(a -> a.getNom())
                 .orElse(DEFAULT_AUTHOR_NAME);
+        String dateStr = post.getDatePublication() != null ? post.getDatePublication().format(dateFormatter) : "";
 
-        HorizontalLayout metadata = new HorizontalLayout(
-                new Paragraph("Par " + authorName),
-                new Paragraph(post.getDatePublication().format(dateFormatter))
-        );
+        Paragraph auteurPara = new Paragraph("Par " + authorName);
+        auteurPara.getStyle().set("font-weight", "bold").set("margin-right", "1em");
+        Paragraph datePara = new Paragraph(dateStr);
+
+        HorizontalLayout metadata = new HorizontalLayout(auteurPara, datePara);
         metadata.setSpacing(true);
+        metadata.setPadding(false);
+        metadata.setWidthFull();
+        metadata.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        metadata.setAlignItems(FlexComponent.Alignment.CENTER);
+
         return metadata;
     }
 
@@ -169,13 +180,17 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      */
     private Div createPostBody(String content) {
         Div contentDiv = new Div(new Paragraph(content));
-        contentDiv.addClassNames(
-                LumoUtility.Background.CONTRAST_10,
-                LumoUtility.Padding.LARGE,
-                LumoUtility.BorderRadius.LARGE,
-                LumoUtility.Margin.Bottom.LARGE
-        );
-        contentDiv.setWidthFull();
+        contentDiv.getStyle()
+                .set("background", "#f7f7fa")
+                .set("border-radius", "8px")
+                .set("box-shadow", "0 1px 4px rgba(0,0,0,0.04)")
+                .set("border", "1px solid #e0e0e0")
+                .set("padding", "1.2em")
+                .set("margin-bottom", "2em")
+                .set("width", "70%")
+                .set("align-self", "center")
+                .set("text-align", "left");
+
         return contentDiv;
     }
 
@@ -183,33 +198,49 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      * Crée la section des commentaires (formulaire + liste).
      */
     private VerticalLayout createCommentsContainer() {
+        H2 commentairesTitle = new H2("Commentaires");
+        commentairesTitle.getStyle().set("width", "55%");
+
+        commentsSection = new VerticalLayout();
+        commentsSection.setWidth("55%"); // même largeur que le formulaire
+        commentsSection.setPadding(false);
+        commentsSection.setSpacing(true);
+
         VerticalLayout container = new VerticalLayout(
-                new H2("Commentaires"),
+                commentairesTitle,
                 createCommentInputForm(),
-                commentsSection = new VerticalLayout()
+                commentsSection
         );
-        container.setWidthFull();
+        container.setWidth("100%");
+        container.setAlignItems(FlexComponent.Alignment.CENTER);
         return container;
     }
 
     /**
      * Crée le formulaire de saisie de commentaire.
      */
-    private VerticalLayout createCommentInputForm() {
+    private HorizontalLayout createCommentInputForm() {
         commentTextArea = new TextArea();
         commentTextArea.setPlaceholder(COMMENT_PLACEHOLDER);
-        commentTextArea.setWidthFull();
+        commentTextArea.setWidth("100%");
+        commentTextArea.setHeight("35px");
 
         submitButton = new Button("Publier", e -> handleCommentSubmission());
 
-        VerticalLayout formLayout = new VerticalLayout(commentTextArea, submitButton);
-        formLayout.setWidthFull();
+        HorizontalLayout formLayout = new HorizontalLayout(commentTextArea, submitButton);
+        formLayout.setWidth("55%");
+        formLayout.setAlignItems(FlexComponent.Alignment.END);
+        formLayout.setSpacing(true);
+
+        submitButton.getStyle().set("min-width", "120px");
+
+        formLayout.setFlexGrow(1, commentTextArea);
+
         return formLayout;
     }
 
     /**
-     * Gère la soumission d'un commentaire (validation, désactivation bouton,
-     * feedback).
+     * Gère la soumission d'un commentaire (validation, feedback).
      */
     private void handleCommentSubmission() {
         ValidationUtils.ValidationResult validation = ValidationUtils.validateContent(commentTextArea);
@@ -245,7 +276,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
                 commentsSection.add(new Paragraph(NO_COMMENTS_MESSAGE));
             } else {
                 commentaires.forEach(comment
-                        -> commentsSection.add(createCommentCard(comment))
+                        -> commentsSection.add(createCommentBubble(comment))
                 );
             }
         }));
@@ -254,21 +285,28 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     /**
      * Crée une carte de commentaire.
      */
-    private Div createCommentCard(Commentaire commentaire) {
-        String authorName = Optional.ofNullable(commentaire.getAuteur())
-                .map(a -> a.getNom())
-                .orElse(DEFAULT_AUTHOR_NAME);
+    private Div createCommentBubble(Commentaire commentaire) {
+        Div bubble = new Div();
+        bubble.getStyle()
+                .set("background", "#f7f7fa")
+                .set("border-radius", "8px")
+                .set("box-shadow", "0 1px 4px rgba(0,0,0,0.04)")
+                .set("border", "1px solid #e0e0e0")
+                .set("margin-bottom", "0.5em")
+                .set("padding", "1em");
 
-        Div card = new Div(
-                new Paragraph(authorName + " - " + commentaire.getDateCreation().format(dateFormatter)),
-                new Paragraph(commentaire.getContenu())
-        );
-        card.addClassNames(
-                LumoUtility.Background.CONTRAST_10,
-                LumoUtility.Padding.MEDIUM,
-                LumoUtility.Margin.Bottom.SMALL
-        );
-        return card;
+        // Auteur et date en gras, sur une ligne
+        String auteur = commentaire.getAuteur() != null ? commentaire.getAuteur().getNom() : "Auteur inconnu";
+        String date = commentaire.getDateCreation() != null ? commentaire.getDateCreation().format(dateFormatter) : "";
+        Span auteurDate = new Span(auteur + " • " + date);
+        auteurDate.getStyle().set("font-weight", "bold").set("font-size", "0.95em").set("display", "block").set("margin-bottom", "0.3em");
+
+        // Contenu du commentaire, en dessous
+        Span contenu = new Span(commentaire.getContenu() != null ? commentaire.getContenu() : "");
+        contenu.getStyle().set("display", "block");
+
+        bubble.add(auteurDate, contenu);
+        return bubble;
     }
 
     /**

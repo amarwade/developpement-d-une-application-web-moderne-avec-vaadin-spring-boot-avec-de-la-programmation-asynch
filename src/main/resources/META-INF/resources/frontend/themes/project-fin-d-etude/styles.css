@@ -100,4 +100,19 @@
 .footer-sticky {
     margin-top: auto;
     width: 100%;
+}
+
+/* Pour un fond général clair */
+body {
+    background: #f5f6fa;
+}
+
+/* Pour les bulles de commentaires */
+.comment-bubble {
+    background: #f7f7fa;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+    border: 1px solid #e0e0e0;
+    margin-bottom: 0.5em;
+    padding: 1em;
 } 

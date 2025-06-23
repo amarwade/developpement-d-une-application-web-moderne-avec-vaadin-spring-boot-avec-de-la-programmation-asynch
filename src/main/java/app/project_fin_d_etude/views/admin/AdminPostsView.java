@@ -12,6 +12,11 @@ import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.button.Button;
+import com.vaadin.flow.component.button.ButtonVariant;
+import com.vaadin.flow.component.icon.VaadinIcon;
+import com.vaadin.flow.component.icon.Icon;
+import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
 
 import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Post;
@@ -105,6 +110,16 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         grid.addColumn(Post::getContenu).setHeader("Contenu");
 
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
+        //un grid colum pour action où il y'aura de bouton qui vont permettre de lire plus de détails post
+        grid.addComponentColumn(this::createActionsColumn).setHeader("Actions");
+    }
+
+    private HorizontalLayout createActionsColumn(Post post) {
+        Button voirDetails = new Button("Détails", e
+                -> getUI().ifPresent(ui -> ui.navigate("user/article/" + post.getId()))
+        );
+        voirDetails.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
+        return new HorizontalLayout(voirDetails);
     }
 
     @Override
