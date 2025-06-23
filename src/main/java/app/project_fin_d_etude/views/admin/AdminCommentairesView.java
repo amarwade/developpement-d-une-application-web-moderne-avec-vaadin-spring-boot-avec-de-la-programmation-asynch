@@ -46,7 +46,7 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
 
         // Affichage automatique des commentaires dès le chargement
         VaadinUtils.showLoading(this);
-        commentairePresenter.chargerCommentaires(null);
+        commentairePresenter.chargerTousLesCommentaires();
     }
 
     /**
@@ -112,6 +112,7 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
         grid.addClassNames("contact-grid");
         grid.setColumns("id", "contenu", "dateCreation");
 
+        // Colonne pour l'auteur (nom de l'utilisateur)
         grid.addColumn(commentaire -> {
             if (commentaire.getAuteur() != null) {
                 return commentaire.getAuteur().getNom();
@@ -119,6 +120,7 @@ public class AdminCommentairesView extends VerticalLayout implements Commentaire
             return "Auteur inconnu";
         }).setHeader("Auteur");
 
+        // Colonne pour l'article (titre du post)
         grid.addColumn(commentaire -> {
             if (commentaire.getPost() != null) {
                 return commentaire.getPost().getTitre();

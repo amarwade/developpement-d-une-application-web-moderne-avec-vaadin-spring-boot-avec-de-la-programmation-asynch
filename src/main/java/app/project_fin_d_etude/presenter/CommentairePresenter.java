@@ -1,7 +1,6 @@
 package app.project_fin_d_etude.presenter;
 
 import java.util.List;
-
 import org.springframework.stereotype.Component;
 
 import com.vaadin.flow.component.UI;
@@ -86,6 +85,9 @@ public class CommentairePresenter {
                 });
     }
 
+    /*
+     * get all commentaires
+     */
     /**
      * Supprime un commentaire par son identifiant.
      */
@@ -131,6 +133,25 @@ public class CommentairePresenter {
                         } else {
                             currentView.afficherMessage("Commentaire modifié avec succès");
                             currentView.rafraichirListe();
+                        }
+                    });
+                });
+    }
+
+    public void chargerTousLesCommentaires() {
+        if (view == null) {
+            return;
+        }
+        final CommentaireView currentView = this.view;
+        final UI ui = UI.getCurrent();
+
+        commentaireService.getAllCommentaires()
+                .whenComplete((commentaires, ex) -> {
+                    ui.access(() -> {
+                        if (ex != null) {
+                            currentView.afficherErreur("Erreur lors du chargement des commentaires : " + ex.getMessage());
+                        } else {
+                            currentView.afficherCommentaires(commentaires);
                         }
                     });
                 });

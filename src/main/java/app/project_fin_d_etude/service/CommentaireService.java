@@ -62,4 +62,9 @@ public class CommentaireService {
         commentaireRepository.deleteById(id);
         return CompletableFuture.completedFuture(null);
     }
+
+    @Async
+    public CompletableFuture<List<Commentaire>> getAllCommentaires() {
+        return CompletableFuture.completedFuture(commentaireRepository.findAll());
+    }
 }
