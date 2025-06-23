@@ -17,12 +17,14 @@ import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Message;
 import app.project_fin_d_etude.presenter.MessagePresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
+import jakarta.annotation.security.RolesAllowed;
 
 /**
  * Vue d'administration des messages : affichage automatique et gestion.
  */
 @Route(value = "admin/messages", layout = AdminLayout.class)
 @PageTitle("Gestion des messages - Administration")
+@RolesAllowed("ADMIN")
 public class AdminMessagesView extends VerticalLayout implements MessagePresenter.MessageView {
 
     private final MessagePresenter messagePresenter;
@@ -33,8 +35,14 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
     public AdminMessagesView(MessagePresenter messagePresenter) {
         this.messagePresenter = messagePresenter;
         this.messagePresenter.setView(this);
+
+        // Initialiser la grille avant de construire le layout
         configureGrid();
+
+        // Ajouter le contenu principal à la vue
         add(createMainContent());
+
+        // Charger les données après que l'UI est construite
         VaadinUtils.showLoading(this);
         messagePresenter.chargerMessages();
     }
@@ -104,6 +112,8 @@ public class AdminMessagesView extends VerticalLayout implements MessagePresente
         grid.addColumn(Message::getContenu).setHeader("Contenu");
         grid.addColumn(Message::getDateEnvoi).setHeader("Date Envoi");
         grid.addColumn(Message::isLu).setHeader("Lu");
+
+        grid.getColumns().forEach(col -> col.setAutoWidth(true));
     }
 
     /**

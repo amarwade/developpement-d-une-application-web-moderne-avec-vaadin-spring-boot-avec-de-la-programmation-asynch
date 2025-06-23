@@ -18,7 +18,6 @@ import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
-import com.vaadin.flow.component.notification.Notification;
 
 import app.project_fin_d_etude.layout.MainLayout;
 import app.project_fin_d_etude.model.Post;
@@ -117,7 +116,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         publishButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
 
         VerticalLayout formLayout = new VerticalLayout(titleField, contentArea, publishButton);
-        formLayout.setWidth("60%");
+        formLayout.setWidth("50%");
         return formLayout;
     }
 
@@ -143,6 +142,7 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
         post.setAuteur(auteur);
 
         postPresenter.publierPost(post);
+        redirigerVersDetail(post.getId());
     }
 
     /**
@@ -209,13 +209,13 @@ public class CreatePostView extends VerticalLayout implements PostPresenter.Post
     // Méthodes non utilisées de l'interface PostView
     @Override
     public void afficherPost(Post post) {
+        // La redirection se fait maintenant après la publication, cette méthode reste inutilisée.
     }
 
     @Override
     public void afficherPosts(List<Post> posts) {
+        // Non utilisé dans cette vue.
+
     }
 
-    @Override
-    public void mettreAJourPagination(int totalItems) {
-    }
 }

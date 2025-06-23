@@ -34,14 +34,14 @@ public class Commentaire {
     /**
      * Auteur du commentaire (utilisateur).
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur auteur;
 
     /**
      * Article auquel le commentaire est associé.
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "post_id", nullable = false)
     private Post post;
 }

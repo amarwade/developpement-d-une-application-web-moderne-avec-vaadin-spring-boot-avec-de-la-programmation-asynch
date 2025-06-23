@@ -5,6 +5,9 @@ import java.util.List;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.oauth2.core.oidc.user.OidcUser;
 
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.Div;
@@ -28,6 +31,8 @@ import app.project_fin_d_etude.presenter.CommentairePresenter;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
 import app.project_fin_d_etude.utils.ValidationUtils;
+import app.project_fin_d_etude.service.UtilisateurService;
+import app.project_fin_d_etude.model.Utilisateur;
 
 /**
  * Vue de détail d'un article : affiche le contenu de l'article et ses
@@ -45,15 +50,17 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     private final PostPresenter postPresenter;
     private final CommentairePresenter commentairePresenter;
     private final DateTimeFormatter dateFormatter;
+    private final UtilisateurService utilisateurService;
     private VerticalLayout commentsSection;
     private TextArea commentTextArea;
     private Button submitButton;
     private Post currentPost;
 
     @Autowired
-    public PostDetailView(PostPresenter postPresenter, CommentairePresenter commentairePresenter) {
+    public PostDetailView(PostPresenter postPresenter, CommentairePresenter commentairePresenter, UtilisateurService utilisateurService) {
         this.postPresenter = postPresenter;
         this.commentairePresenter = commentairePresenter;
+        this.utilisateurService = utilisateurService;
         this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
         this.postPresenter.setView(this);
         this.commentairePresenter.setView(this);
@@ -82,6 +89,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     @Override
     public void afficherPost(Post post) {
         getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this); // Cacher le loader principal
             if (post == null) {
                 showErrorAndRedirect("Article introuvable ou supprimé");
                 return;
@@ -204,17 +212,23 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
      * feedback).
      */
     private void handleCommentSubmission() {
-        submitButton.setEnabled(false);
         ValidationUtils.ValidationResult validation = ValidationUtils.validateContent(commentTextArea);
         if (!validation.isValid()) {
             VaadinUtils.showErrorNotification(validation.getErrorMessage());
-            submitButton.setEnabled(true);
             return;
         }
+
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication.getPrincipal() instanceof OidcUser oidcUser)) {
+            VaadinUtils.showErrorNotification("Impossible de récupérer l'utilisateur connecté.");
+            return;
+        }
+        Utilisateur auteur = utilisateurService.findOrCreateAuteur(oidcUser);
 
         Commentaire commentaire = new Commentaire();
         commentaire.setContenu(commentTextArea.getValue().trim());
         commentaire.setPost(currentPost);
+        commentaire.setAuteur(auteur);
         commentairePresenter.ajouter(commentaire);
     }
 
@@ -265,7 +279,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         getUI().ifPresent(ui -> ui.access(() -> {
             VaadinUtils.showSuccessNotification(message);
             commentTextArea.clear();
-            submitButton.setEnabled(true);
+            rafraichirListe();
         }));
     }
 
@@ -275,8 +289,8 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     @Override
     public void afficherErreur(String erreur) {
         getUI().ifPresent(ui -> ui.access(() -> {
+            VaadinUtils.hideLoading(this);
             VaadinUtils.showErrorNotification(erreur);
-            submitButton.setEnabled(true);
         }));
     }
 
@@ -287,7 +301,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
     public void rafraichirListe() {
         getUI().ifPresent(ui -> ui.access(() -> {
             if (currentPost != null) {
-                commentairePresenter.chargerCommentaires(currentPost);
+                postPresenter.chargerPost(currentPost.getId());
             }
         }));
     }
@@ -300,7 +314,7 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
         getUI().ifPresent(ui -> ui.navigate("articles"));
     }
 
-    // Méthodes non utilisées de PostView
+// Méthodes non utilisées de PostView
     @Override
     public void afficherPosts(List<Post> posts) {
     }
@@ -311,9 +325,5 @@ public class PostDetailView extends VerticalLayout implements HasUrlParameter<Lo
 
     @Override
     public void redirigerVersDetail(Long postId) {
-    }
-
-    @Override
-    public void mettreAJourPagination(int totalItems) {
     }
 }

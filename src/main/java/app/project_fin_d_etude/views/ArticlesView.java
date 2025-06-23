@@ -18,6 +18,7 @@ import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 import com.vaadin.flow.component.textfield.TextField;
 import com.vaadin.flow.data.value.ValueChangeMode;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
@@ -33,11 +34,8 @@ import app.project_fin_d_etude.utils.VaadinUtils;
 @PageTitle("Articles")
 public class ArticlesView extends VerticalLayout implements PostPresenter.PostView {
 
-    private static final int ITEMS_PER_PAGE = 6;
     private final PostPresenter postPresenter;
-    private int currentPage = 0;
-    private final VerticalLayout postsContainer = new VerticalLayout();
-    private HorizontalLayout pagination;
+    private final FlexLayout gridContainer = new FlexLayout();
     private String currentKeyword = null;
     private VerticalLayout loader;
 
@@ -52,20 +50,36 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
         configureLayout();
 
         add(createMainSection());
-        add(createSearchBar());
 
-        postsContainer.setVisible(false);
-        add(postsContainer);
+        // Barre de recherche centrée dans un conteneur
+        VerticalLayout searchBarContainer = new VerticalLayout(createSearchBar());
+        searchBarContainer.setWidthFull();
+        searchBarContainer.setAlignItems(Alignment.CENTER);
+        searchBarContainer.getStyle().set("margin-top", "24px").set("margin-bottom", "32px");
+        add(searchBarContainer);
 
-        pagination = new HorizontalLayout();
-        pagination.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-        pagination.setWidthFull();
-        pagination.setVisible(false);
-        add(pagination);
+        gridContainer.setWidthFull();
+        gridContainer.setFlexWrap(FlexLayout.FlexWrap.WRAP);
+        gridContainer.getStyle().set("gap", "32px");
+        gridContainer.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        gridContainer.getStyle().set("max-width", "80%").set("margin", "32px auto 0 auto").set("padding", "16px");
+        gridContainer.getStyle().set("box-sizing", "border-box");
+        add(new H3("Recent blog posts") {
+            {
+                //mettre un left margin auto pour centrer le titre
+                getStyle().set("margin-top", "32px");
+                getStyle().set("text-align", "center");
+                getStyle().set("font-size", "1.5rem");
+                getStyle().set("font-weight", "bold");
+                getStyle().set("width", "100%");
+                
+
+            }
+        });
+        add(gridContainer);
 
         showLoader();
         postPresenter.chargerPosts();
-
     }
 
     private VerticalLayout createMainSection() {
@@ -97,13 +111,9 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
      * Configure le layout principal de la vue.
      */
     private void configureLayout() {
-        setSpacing(false);
-        setPadding(false);
         setSizeFull();
         addClassNames(LumoUtility.Background.CONTRAST_5);
-        postsContainer.setWidthFull();
-        postsContainer.setSpacing(true);
-        postsContainer.setPadding(true);
+        gridContainer.setWidthFull();
     }
 
     /**
@@ -111,43 +121,29 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
      */
     private HorizontalLayout createSearchBar() {
         TextField searchField = new TextField();
-        searchField.setPlaceholder("Rechercher un article...");
+        searchField.setPlaceholder("Articles name or category");
         searchField.setWidth("350px");
         searchField.setClearButtonVisible(true);
         searchField.setValueChangeMode(ValueChangeMode.EAGER);
-        Button searchButton = new Button("Rechercher", e -> triggerSearch(searchField.getValue()));
-        searchButton.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
+
         searchField.addValueChangeListener(e -> {
             String value = e.getValue();
-            currentPage = 1;
             showLoader();
-            if (value == null || value.trim().isEmpty()) {
-                currentKeyword = null;
-                postPresenter.loadPaginatedPosts(0, ITEMS_PER_PAGE);
-            } else {
-                currentKeyword = value.trim();
-                postPresenter.rechercherArticles(currentKeyword, 0, ITEMS_PER_PAGE);
-            }
+            currentKeyword = (value != null) ? value.trim() : null;
+            postPresenter.rechercherArticles(currentKeyword);
         });
+
+        Button searchButton = new Button("RECHERCHER", e -> {
+            showLoader();
+            postPresenter.rechercherArticles(searchField.getValue());
+        });
+        searchButton.getStyle().set("background-color", "#6c63ff").set("color", "white").set("border-radius", "8px");
+
         HorizontalLayout searchBar = new HorizontalLayout(searchField, searchButton);
         searchBar.setAlignItems(Alignment.CENTER);
-        searchBar.setWidthFull();
+        searchBar.setWidth(null);
+        searchBar.getStyle().set("margin-bottom", "0px");
         return searchBar;
-    }
-
-    /**
-     * Déclenche la recherche d'articles par mot-clé.
-     */
-    private void triggerSearch(String keyword) {
-        currentPage = 1;
-        showLoader();
-        if (keyword == null || keyword.trim().isEmpty()) {
-            currentKeyword = null;
-            postPresenter.loadPaginatedPosts(0, ITEMS_PER_PAGE);
-        } else {
-            currentKeyword = keyword.trim();
-            postPresenter.rechercherArticles(currentKeyword, 0, ITEMS_PER_PAGE);
-        }
     }
 
     /**
@@ -157,7 +153,7 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
     @Override
     public void afficherPosts(List<Post> posts) {
         hideLoader();
-        postsContainer.removeAll();
+        gridContainer.removeAll();
         if (posts == null || posts.isEmpty()) {
             Paragraph emptyMsg = new Paragraph("Aucun article trouvé.");
             emptyMsg.addClassNames(
@@ -166,83 +162,14 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
                     LumoUtility.FontSize.LARGE,
                     LumoUtility.Margin.Top.XLARGE
             );
-            postsContainer.add(emptyMsg);
+            gridContainer.add(emptyMsg);
         } else {
             for (Post post : posts) {
-                postsContainer.add(new BlogPostCard(post, p -> getUI().ifPresent(ui -> ui.navigate("user/article/" + p.getId()))));
+                BlogPostCard card = new BlogPostCard(post, p -> getUI().ifPresent(ui -> ui.navigate("user/article/" + p.getId())));
+                card.setWidth("320px");
+                card.getStyle().set("min-width", "260px").set("max-width", "340px");
+                gridContainer.add(card);
             }
-        }
-        mettreAJourPagination(posts != null ? posts.size() : 0);
-    }
-
-    /**
-     * Met à jour la pagination en fonction du nombre total d'éléments.
-     */
-    @Override
-    public void mettreAJourPagination(int totalItems) {
-        if (pagination == null) {
-            pagination = new HorizontalLayout();
-            pagination.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
-            pagination.setWidthFull();
-            add(pagination);
-        }
-        pagination.removeAll();
-        int totalPages = (int) Math.ceil((double) totalItems / ITEMS_PER_PAGE);
-        if (totalPages <= 1) {
-            return;
-        }
-
-        Button prevButton = new Button("← Précédent");
-        prevButton.setEnabled(currentPage > 1);
-        prevButton.addClickListener(e -> {
-            if (currentPage > 1) {
-                currentPage--;
-                triggerPaginatedSearch();
-            }
-        });
-
-        HorizontalLayout pageNumbers = new HorizontalLayout();
-        pageNumbers.setSpacing(true);
-
-        int startPage = Math.max(1, currentPage - 2);
-        int endPage = Math.min(totalPages, currentPage + 2);
-
-        for (int i = startPage; i <= endPage; i++) {
-            Button pageBtn = new Button(String.valueOf(i));
-            pageBtn.setEnabled(i != currentPage);
-            if (i == currentPage) {
-                pageBtn.addThemeVariants(ButtonVariant.LUMO_PRIMARY);
-            }
-            int page = i;
-            pageBtn.addClickListener(e -> {
-                currentPage = page;
-                triggerPaginatedSearch();
-            });
-            pageNumbers.add(pageBtn);
-        }
-
-        Button nextButton = new Button("Suivant →");
-        nextButton.setEnabled(currentPage < totalPages);
-        nextButton.addClickListener(e -> {
-            if (currentPage < totalPages) {
-                currentPage++;
-                triggerPaginatedSearch();
-            }
-        });
-
-        pagination.add(prevButton, pageNumbers, nextButton);
-    }
-
-    /**
-     * Déclenche la recherche paginée selon le contexte (mot-clé ou non).
-     */
-    private void triggerPaginatedSearch() {
-        int pageIndex = currentPage - 1;
-        showLoader();
-        if (currentKeyword != null && !currentKeyword.trim().isEmpty()) {
-            postPresenter.rechercherArticles(currentKeyword, pageIndex, ITEMS_PER_PAGE);
-        } else {
-            postPresenter.loadPaginatedPosts(pageIndex, ITEMS_PER_PAGE);
         }
     }
 
@@ -257,16 +184,14 @@ public class ArticlesView extends VerticalLayout implements PostPresenter.PostVi
             loader.add(new H3("Chargement des articles..."), progress);
         }
         add(loader);
-        postsContainer.setVisible(false);
-        pagination.setVisible(false);
+        gridContainer.setVisible(false);
     }
 
     private void hideLoader() {
         if (loader != null) {
             remove(loader);
         }
-        postsContainer.setVisible(true);
-        pagination.setVisible(true);
+        gridContainer.setVisible(true);
     }
 
     // ... autres méthodes d'interface non utilisées

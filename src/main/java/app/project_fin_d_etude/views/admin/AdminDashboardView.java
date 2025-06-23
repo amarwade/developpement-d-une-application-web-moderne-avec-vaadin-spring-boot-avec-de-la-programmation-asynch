@@ -1,9 +1,9 @@
 package app.project_fin_d_etude.views.admin;
 
 import com.vaadin.flow.component.Component;
-import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.html.H2;
 import com.vaadin.flow.component.html.Span;
+import com.vaadin.flow.component.icon.Icon;
 import com.vaadin.flow.component.icon.VaadinIcon;
 import com.vaadin.flow.component.orderedlayout.FlexComponent;
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout;
@@ -14,12 +14,14 @@ import com.vaadin.flow.router.RouterLink;
 import com.vaadin.flow.theme.lumo.LumoUtility;
 
 import app.project_fin_d_etude.layout.AdminLayout;
+import jakarta.annotation.security.RolesAllowed;
 
 /**
  * Vue Dashboard Admin : navigation rapide et activité récente.
  */
 @Route(value = "admin/dashboard", layout = AdminLayout.class)
 @PageTitle("Dashboard Admin")
+@RolesAllowed("ADMIN")
 public class AdminDashboardView extends VerticalLayout {
 
     private static final String NO_ACTIVITY_TEXT = "Aucune activité récente";
@@ -94,7 +96,7 @@ public class AdminDashboardView extends VerticalLayout {
      * Crée un lien de navigation stylisé avec icône.
      */
     private RouterLink createNavLink(String text, Class<? extends Component> navigationTarget, VaadinIcon icon) {
-        final RouterLink link = new RouterLink(navigationTarget);
+        RouterLink link = new RouterLink(navigationTarget);
         link.getStyle()
                 .set("display", "flex")
                 .set("align-items", "center")
@@ -104,17 +106,16 @@ public class AdminDashboardView extends VerticalLayout {
                 .set("text-decoration", "none")
                 .set("color", "black");
 
-        final HorizontalLayout layout = new HorizontalLayout();
-        layout.setSpacing(true);
-        layout.setAlignItems(Alignment.CENTER);
+        Icon iconComponent = icon.create();
+        iconComponent.getStyle()
+                .set("color", "var(--lumo-primary-color)")
+                .set("background-color", "var(--lumo-shade-10pct)")
+                .set("border-radius", "50%")
+                .set("padding", "0.25rem");
 
-        final Button button = new Button(icon.create());
-        button.getStyle()
-                .set("background-color", "var(--lumo-primary-color)")
-                .set("color", "white");
-
-        layout.add(button, new Span(text));
-        link.add(layout);
+        Span textSpan = new Span(text);
+        link.add(iconComponent, textSpan);
         return link;
     }
+
 }

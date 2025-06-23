@@ -17,12 +17,11 @@ import app.project_fin_d_etude.layout.AdminLayout;
 import app.project_fin_d_etude.model.Post;
 import app.project_fin_d_etude.presenter.PostPresenter;
 import app.project_fin_d_etude.utils.VaadinUtils;
+import jakarta.annotation.security.RolesAllowed;
 
-/**
- * Vue d'administration des articles : affichage automatique et gestion.
- */
 @Route(value = "admin/posts", layout = AdminLayout.class)
 @PageTitle("Gestion des articles - Administration")
+@RolesAllowed("ADMIN")
 public class AdminPostsView extends VerticalLayout implements PostPresenter.PostView {
 
     private final PostPresenter postPresenter;
@@ -45,9 +44,6 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         postPresenter.chargerPosts();
     }
 
-    /**
-     * Crée le layout principal (titre, section, grid).
-     */
     private VerticalLayout createMainContent() {
         VerticalLayout mainContent = new VerticalLayout();
         mainContent.setWidth("100%");
@@ -66,9 +62,6 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         return mainContent;
     }
 
-    /**
-     * Crée le titre principal de la page.
-     */
     private H1 createPageTitle() {
         H1 pageTitle = new H1("GESTION DES ARTICLES");
         pageTitle.addClassNames(
@@ -81,9 +74,6 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         return pageTitle;
     }
 
-    /**
-     * Crée la section contenant la grille des articles.
-     */
     private VerticalLayout createContentSection() {
         VerticalLayout contentSection = new VerticalLayout();
         contentSection.setWidth("90%");
@@ -101,12 +91,9 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         return contentSection;
     }
 
-    /**
-     * Configure la grille d'affichage des articles.
-     */
     private void configureGrid() {
         grid.addClassNames("contact-grid");
-        grid.setColumns("id", "titre", "contenu", "datePublication");
+        grid.setColumns("id", "titre", "datePublication");
 
         grid.addColumn(post -> {
             if (post.getAuteur() != null) {
@@ -115,12 +102,11 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
             return "Auteur inconnu";
         }).setHeader("Auteur");
 
+        grid.addColumn(Post::getContenu).setHeader("Contenu");
+
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
     }
 
-    /**
-     * Affiche les articles dans la grille, ou un message si aucun article.
-     */
     @Override
     public void afficherPosts(List<Post> posts) {
         getUI().ifPresent(ui -> ui.access(() -> {
@@ -135,17 +121,11 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
         }));
     }
 
-    /**
-     * Affiche un message de succès.
-     */
     @Override
     public void afficherMessage(String message) {
         VaadinUtils.showSuccessNotification(message);
     }
 
-    /**
-     * Affiche un message d'erreur.
-     */
     @Override
     public void afficherErreur(String erreur) {
         VaadinUtils.showErrorNotification(erreur);
@@ -158,11 +138,6 @@ public class AdminPostsView extends VerticalLayout implements PostPresenter.Post
 
     @Override
     public void redirigerVersDetail(Long postId) {
-        // Non utilisé dans cette vue
-    }
-
-    @Override
-    public void mettreAJourPagination(int totalItems) {
         // Non utilisé dans cette vue
     }
 

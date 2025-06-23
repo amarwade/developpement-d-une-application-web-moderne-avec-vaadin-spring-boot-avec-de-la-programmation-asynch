@@ -28,6 +28,10 @@ public interface PostRepository extends JpaRepository<Post, Long> {
             + "OR LOWER(p.contenu) LIKE LOWER(CONCAT('%', :keyword, '%'))")
     Page<Post> searchPosts(@Param("keyword") String keyword, Pageable pageable);
 
+    @Query("SELECT p FROM Post p WHERE LOWER(p.titre) LIKE LOWER(CONCAT('%', :keyword, '%')) "
+            + "OR LOWER(p.contenu) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY p.datePublication DESC")
+    List<Post> searchAllPosts(@Param("keyword") String keyword);
+
     /**
      * Récupère tous les posts triés par date de publication décroissante
      * (paginé).
@@ -37,6 +41,8 @@ public interface PostRepository extends JpaRepository<Post, Long> {
      */
     @Query("SELECT p FROM Post p ORDER BY p.datePublication DESC")
     Page<Post> findAllOrderByDatePublicationDesc(Pageable pageable);
+
+    List<Post> findAllByOrderByDatePublicationDesc();
 
     /**
      * Récupère un post par son id avec ses commentaires et son auteur (fetch

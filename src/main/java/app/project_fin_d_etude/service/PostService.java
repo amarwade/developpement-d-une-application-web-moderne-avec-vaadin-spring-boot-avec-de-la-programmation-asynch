@@ -32,7 +32,7 @@ public class PostService {
      */
     @Async
     public CompletableFuture<List<Post>> getAllPosts() {
-        return CompletableFuture.supplyAsync(() -> postRepository.findAllWithAuteur());
+        return CompletableFuture.completedFuture(postRepository.findAllByOrderByDatePublicationDesc());
     }
 
     /**
@@ -151,5 +151,13 @@ public class PostService {
         if (size <= 0) {
             throw new IllegalArgumentException("La taille de page doit être positive");
         }
+    }
+
+    @Async
+    public CompletableFuture<List<Post>> searchAllPosts(String keyword) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return getAllPosts();
+        }
+        return CompletableFuture.completedFuture(postRepository.searchAllPosts(keyword.trim()));
     }
 }

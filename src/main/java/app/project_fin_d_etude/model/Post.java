@@ -51,7 +51,7 @@ public class Post {
     /**
      * Auteur de l'article (utilisateur).
      */
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "utilisateur_id", nullable = false)
     private Utilisateur auteur;
 

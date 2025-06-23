@@ -5,7 +5,6 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-import com.vaadin.flow.component.html.Div;
 import com.vaadin.flow.component.html.H1;
 import com.vaadin.flow.component.html.H3;
 import com.vaadin.flow.component.html.Paragraph;
@@ -15,6 +14,7 @@ import com.vaadin.flow.component.progressbar.ProgressBar;
 import com.vaadin.flow.router.PageTitle;
 import com.vaadin.flow.router.Route;
 import com.vaadin.flow.theme.lumo.LumoUtility;
+import com.vaadin.flow.component.orderedlayout.FlexLayout;
 
 import app.project_fin_d_etude.components.BlogPostCard;
 import app.project_fin_d_etude.layout.MainLayout;
@@ -33,28 +33,36 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
 
     private static final int MAX_ARTICLES = 6;
     private static final String DATE_FORMAT = "dd MMMM yyyy";
-    private static final String GRID_TEMPLATE = "repeat(auto-fit, minmax(300px, 1fr))";
     private static final String MAIN_DESCRIPTION = "L'objectif du site est de fournir un espace clair et structuré pour le partage de connaissances, "
             + "d'opinions ou d'actualités tout en assurant la modération et la fiabilité des échanges.";
 
-    private final PostPresenter postPresenter;
     private final DateTimeFormatter dateFormatter;
-    private Div recentPostsGrid;
-    private VerticalLayout recentPostsSection;
+    private FlexLayout recentPostsGrid;
     private VerticalLayout loader;
 
     @Autowired
     public HomePageView(final PostPresenter postPresenter) {
-        this.postPresenter = postPresenter;
-        this.postPresenter.setView(this);
+        postPresenter.setView(this);
         this.dateFormatter = DateTimeFormatter.ofPattern(DATE_FORMAT);
 
         configureLayout();
         add(createMainSection());
 
-        recentPostsSection = createRecentPostsSection();
-        recentPostsSection.setVisible(false);
-        add(recentPostsSection);
+        H3 recentPostsTitle = new H3("Articles récents");
+        recentPostsTitle.getStyle().set("margin-top", "32px").set("text-align", "center").set("font-size", "1.5rem").set("font-weight", "bold").set("width", "100%");
+        add(recentPostsTitle);
+
+        recentPostsGrid = new FlexLayout();
+        recentPostsGrid.setWidthFull();
+        recentPostsGrid.setFlexWrap(FlexLayout.FlexWrap.WRAP);
+        recentPostsGrid.setJustifyContentMode(FlexComponent.JustifyContentMode.CENTER);
+        recentPostsGrid.getStyle().set("gap", "32px")
+                .set("max-width", "80%")
+                .set("margin", "32px auto 0 auto")
+                .set("padding", "16px")
+                .set("box-sizing", "border-box");
+        recentPostsGrid.setVisible(false);
+        add(recentPostsGrid);
 
         showLoader();
         postPresenter.chargerPosts();
@@ -118,33 +126,6 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     }
 
     /**
-     * Crée la section affichant les articles récents.
-     */
-    private VerticalLayout createRecentPostsSection() {
-        final VerticalLayout section = VaadinUtils.createSection("80%", FlexComponent.Alignment.START);
-        section.addClassNames(
-                LumoUtility.Margin.Top.LARGE,
-                LumoUtility.Padding.LARGE,
-                LumoUtility.Border.ALL,
-                LumoUtility.BorderColor.CONTRAST
-        );
-        section.add(VaadinUtils.createSectionTitle("Articles récents"));
-        recentPostsGrid = createPostsGrid();
-        section.add(recentPostsGrid);
-        return section;
-    }
-
-    /**
-     * Crée la grille d'affichage des articles.
-     */
-    private Div createPostsGrid() {
-        final Div grid = new Div();
-        grid.addClassNames(LumoUtility.Display.GRID, LumoUtility.Gap.MEDIUM);
-        grid.getStyle().set("grid-template-columns", GRID_TEMPLATE);
-        return grid;
-    }
-
-    /**
      * Affiche les articles reçus (ou un message si aucun).
      */
     @Override
@@ -182,11 +163,6 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
     }
 
     @Override
-    public void mettreAJourPagination(int totalItems) {
-        // Non utilisé dans cette vue
-    }
-
-    @Override
     public void afficherPost(Post post) {
         // Non utilisé dans cette vue
     }
@@ -202,14 +178,14 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
             loader.add(new H3("Chargement des articles récents..."), progress);
         }
         add(loader);
-        recentPostsSection.setVisible(false);
+        recentPostsGrid.setVisible(false);
     }
 
     private void hideLoader() {
         if (loader != null) {
             remove(loader);
         }
-        recentPostsSection.setVisible(true);
+        recentPostsGrid.setVisible(true);
     }
 
     /**
@@ -224,7 +200,12 @@ public class HomePageView extends VerticalLayout implements PostPresenter.PostVi
             recentPostsGrid.add(noArticles);
             return;
         }
-        articles.stream().limit(MAX_ARTICLES).forEach(post -> recentPostsGrid.add(createPostCard(post)));
+        articles.stream().limit(MAX_ARTICLES).forEach(post -> {
+            BlogPostCard card = createPostCard(post);
+            card.setWidth("320px");
+            card.getStyle().set("min-width", "260px").set("max-width", "340px");
+            recentPostsGrid.add(card);
+        });
     }
 
     /**
