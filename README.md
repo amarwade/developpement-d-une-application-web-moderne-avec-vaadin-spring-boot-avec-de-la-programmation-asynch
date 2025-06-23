@@ -12,16 +12,13 @@ Interface utilisateur simple, minimaliste et responsive, inspirée d’un design
 
 ## ⚛️ Fonctionnalités principales
 
-- 🧑 Authentification des utilisateurs (connexion, inscription)
+- 🧑 Authentification des utilisateurs (Par keycloak)
 - ✍️ Création et gestion de posts
-- 💬 Commentaires sur les articles
+- 💬 Commentaires sur les Posts
 - 🔡 Sécurité Spring avec mots de passe encryptés (BCrypt)
-- 🌑 Mode sombre / clair intégré (Vaadin `Lumo`)
 - 🧠 Architecture **MVP** (Model - View - Presenter)
 - ⚡ Programmation asynchrone avec `CompletableFuture`
 - 📋 Page d’administration réservée à l’admin
-- 🧪 Tests unitaires & montée en charge (prévu)
-- ☁️ Déploiement cloud-ready (Docker & GCP Cloud Run)
 
 ---
 
@@ -51,34 +48,19 @@ the-blog-project/
 | Sécurité      | Spring Security + BCrypt                 |
 | Asynchrone    | `CompletableFuture`, `@Async`            |
 | Pattern       | MVP (Model – View – Presenter)           |
-| Tests         | JUnit, Maven Surefire Plugin             |
-| Déploiement   | Docker, Cloud Run (Google Cloud)         |
 
 ---
 
 ## ⚙️ Configuration
 
 ### 📁 `application.properties`
-
-```properties
-spring.datasource.url=jdbc:mysql://localhost:3306/the_blog_db
-spring.datasource.username=root
-spring.datasource.password=your_password
-
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
-
-vaadin.servlet.productionMode=false
-```
-
----
+Voir le application.properties
 
 ## 🔐 Sécurité
 
-- Authentification via formulaire `/login`
-- Utilisation de `AuthenticationManager` et `SecurityContextHolder`
+- Authentification via Keycloak
 - `PasswordEncoder` (BCrypt)
-- Règles de filtrage via `SecurityConfig.java`
+- Règles de encodage via `SecurityConfig.java`
 
 ---
 
@@ -89,19 +71,20 @@ vaadin.servlet.productionMode=false
 - Java 17
 - Maven
 - MySQL
+- Keycloak
 
 ### 2. Lancer l’application
 
 ```bash
 # Créer la base de données dans MySQL :
-CREATE DATABASE the_blog_db;
+CREATE DATABASE Nom_Base;
 
 # Puis lancer :
 mvn clean install
 mvn spring-boot:run
 ```
 
-Accès : [http://localhost:8080](http://localhost:8080)
+Accès : [http://localhost:8081](http://localhost:8081)
 
 ---
 
